@@ -188,10 +188,10 @@ __attribute__((naked, noinline)) void BranchToHandler()
         "mflr      %r2;"
         "std       %r2, 0x170(%r1);"
 
-        // Get the opd pointer from exec_handler() and call it
+        // Get the opd pointer from HandleRegisters() and call it
         "li        %r3, 0;"
         "oris      %r3, %r3, _Z15HandleRegistersv@h;"
-        "ori       %r3, %r3, _Z15HandleRegisters@l;"
+        "ori       %r3, %r3, _Z15HandleRegistersv@l;"
         "lwz       %r2, 4(%r3);"
         "lwz       %r3, 0(%r3);"
         "mtlr      %r3;"
