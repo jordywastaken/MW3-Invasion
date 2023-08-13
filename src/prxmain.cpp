@@ -21,7 +21,7 @@ SYS_MODULE_STOP(_Z12InvasionStopv);
 int InvasionStart()
 {
     // utils
-    hook::start();
+    hook::start(init_proc, 20);
 
     // components
     scheduler::start();

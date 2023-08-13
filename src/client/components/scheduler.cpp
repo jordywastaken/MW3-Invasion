@@ -85,15 +85,15 @@ namespace scheduler
 
             }, "Async Scheduler", 420, 24 * 1024);
 
-        hook::inject(0x1DCB54, [](HookContext_t* ctx)
+        hook::inject(0x1DCB54, [](HookContext_t& ctx)
             {
-                ctx->r6 = ctx->r3;
+                ctx.r6 = ctx.r3;
 
-                switch (ctx->r3)
+                switch (ctx.r3)
                 {
                 case(0x121ULL):
                 case(0x131ULL):
-                    ctx->lr = 0x1DCC90ULL;
+                    ctx.lr = 0x1DCC90ULL;
                     break;
                 }
             });

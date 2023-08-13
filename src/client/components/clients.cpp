@@ -340,8 +340,8 @@ namespace clients
 
     void stop()
     {
-        hook::restore(0x13EC84, *(uint32_t**)(ClientCommand_Original), 4);
-        hook::restore(0x12F708, *(uint32_t**)(ClientThink_real_Original), 4);
+        hook::copy(0x13EC84, *(uint32_t**)(ClientCommand_Original), 4);
+        hook::copy(0x12F708, *(uint32_t**)(ClientThink_real_Original), 4);
 
         for (int i = 0; i < 2; i++)
         {

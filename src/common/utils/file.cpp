@@ -65,18 +65,18 @@ bool FS_DirExist(const char* path)
 
 bool FS_CreateDir(const char* path)
 {
-    const char* _path = path;
-
+    const char* currentPos = path;
     int pathLen = _sys_strlen(path);
+
     char* pathStep = new char[pathLen];
     _sys_memset(pathStep, 0, pathLen);
 
-    while (*++path)
+    while (*++currentPos)
     {
-        if (*path == '/')
+        if (*currentPos == '/')
         {
-            _sys_strncpy(pathStep, _path, path - _path);
-            pathStep[path - _path] = 0;
+            _sys_strncpy(pathStep, path, currentPos - path);
+            pathStep[currentPos - path] = 0;
 
             if (!FS_DirExist(pathStep))
             {

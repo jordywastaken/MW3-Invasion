@@ -18,7 +18,7 @@ public:
 
     operator T* ()
     {
-        volatile uintptr_t object_fptr[]{ this->sp_object_, hook::resolvetoc() };
+        volatile uintptr_t object_fptr[]{ this->sp_object_, hook::toc() };
 
         T* type = *reinterpret_cast<T*>(this->sp_object_);
         return (decltype(type))object_fptr;

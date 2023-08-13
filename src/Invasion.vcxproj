@@ -68,7 +68,7 @@
     <Link>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <DataStripping>None</DataStripping>
+      <DataStripping>StripFuncsAndData</DataStripping>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
