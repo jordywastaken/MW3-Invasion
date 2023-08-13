@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|PS3">
+      <Configuration>Debug</Configuration>
+      <Platform>PS3</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|PS3">
+      <Configuration>Release</Configuration>
+      <Platform>PS3</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCTargetsPath Condition="'$(VCTargetsPath12)' != '' and '$(VSVersion)' == '' and '$(VisualStudioVersion)' == ''">$(VCTargetsPath12)</VCTargetsPath>
+    <ProjectGuid>{D14740CE-9207-408D-8908-20004C66B303}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>SNC</PlatformToolset>
+    <NoTocRestore>NoTocRestore1</NoTocRestore>
+    <ExceptionsAndRtti>NoExceptsNoRtti</ExceptionsAndRtti>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>SNC</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(DebuggerFlavor)'=='PS3Debugger'" Label="OverrideDebuggerDefaults">
+    <!--LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand-->
+    <!--LocalDebuggerCommandArguments></LocalDebuggerCommandArguments-->
+    <!--LocalDebuggerCommandLine>-r -e -m</LocalDebuggerCommandLine-->
+    <!--LocalRunCommandLine>-r</LocalRunCommandLine-->
+    <!--LocalTunerCommandLine></LocalTunerCommandLine-->
+    <!--LocalDebuggerFileServingDirectory>$(ProjectDir)</LocalDebuggerFileServingDirectory-->
+    <!--LocalDebuggerHomeDirectory>$(ProjectDir)</LocalDebuggerHomeDirectory-->
+    <!--LocalDebuggerProjectFile></LocalDebuggerProjectFile-->
+    <!--LocalDebuggerResetType>Soft</LocalDebuggerResetType-->
+    <!--LocalDebuggerClearTty>False</LocalDebuggerClearTty-->
+  </PropertyGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <OutDir>$(SolutionDir)bin\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin-int\$(Platform)-$(Configuration)\</IntDir>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;__CELL_ASSERT__;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <OptimizationLevel>Level2</OptimizationLevel>
+      <CppLanguageStd>Cpp11</CppLanguageStd>
+      <DisableSpecificWarnings>1070</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <InfoStripping>StripDebug</InfoStripping>
+    </Link>
+    <Link>
+      <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <DataStripping>StripFuncsAndData</DataStripping>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <OptimizationLevel>Level2</OptimizationLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="client\components\clients.cpp" />
+    <ClCompile Include="client\components\hudelems.cpp" />
+    <ClCompile Include="client\components\scheduler.cpp" />
+    <ClCompile Include="client\globals.cpp" />
+    <ClCompile Include="common\utils\file.cpp" />
+    <ClCompile Include="common\utils\hooking.cpp" />
+    <ClCompile Include="common\utils\imports.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="client\components\clients.hpp" />
+    <ClInclude Include="client\components\hudelems.hpp" />
+    <ClInclude Include="client\components\scheduler.hpp" />
+    <ClInclude Include="client\game\enums.hpp" />
+    <ClInclude Include="client\game\game.hpp" />
+    <ClInclude Include="client\game\structs.hpp" />
+    <ClInclude Include="client\game\symbols.hpp" />
+    <ClInclude Include="client\globals.hpp" />
+    <ClInclude Include="common\utils\file.hpp" />
+    <ClInclude Include="common\utils\hooking.hpp" />
+    <ClInclude Include="common\utils\imports.hpp" />
+    <ClInclude Include="common\utils\thread.hpp" />
+  </ItemGroup>
+  <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
