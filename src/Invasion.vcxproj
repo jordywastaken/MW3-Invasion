@@ -48,8 +48,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
-    <OutDir>$(SolutionDir)bin\$(Platform)-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)bin-int\$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Configuration)\</IntDir>
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -68,7 +68,7 @@
     <Link>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <DataStripping>StripFuncsAndData</DataStripping>
+      <DataStripping>None</DataStripping>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
@@ -86,7 +86,7 @@
     <ClCompile Include="common\utils\file.cpp" />
     <ClCompile Include="common\utils\hooking.cpp" />
     <ClCompile Include="common\utils\imports.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="prxmain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="client\components\clients.hpp" />
