@@ -22,6 +22,7 @@ void HudElem::Destroy(game_hudelem_s* hud)
     if (hud)
     {
         _sys_memset(hud, 0, sizeof(game_hudelem_s));
+        hud = 0;
     }
 }
 

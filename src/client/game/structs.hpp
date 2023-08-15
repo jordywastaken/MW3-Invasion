@@ -2510,3 +2510,77 @@ struct level_locals_t
     int nextActorAntilagFrame;
     unsigned char localizedStringRefCount[1200];
 };
+
+struct VariableStackBuffer
+{
+    const char* pos;
+    unsigned short size;
+    unsigned short bufLen;
+    unsigned short localId;
+    unsigned char time;
+    char buf[1];
+};
+
+union VariableUnion
+{
+    int intValue;
+    unsigned int uintValue;
+    float floatValue;
+    unsigned int stringValue;
+    const float* vectorValue;
+    const char* codePosValue;
+    unsigned int pointerValue;
+    VariableStackBuffer* stackValue;
+    unsigned int entityOffset;
+};
+
+struct VariableValue
+{
+    VariableUnion u;
+    int type;
+};
+
+struct function_stack_t
+{
+    const char* pos;
+    unsigned int localId;
+    unsigned int localVarCount;
+    VariableValue* top;
+    VariableValue* startTop;
+};
+
+struct function_frame_t
+{
+    function_stack_t fs;
+    int topType;
+};
+
+struct scrVmPub_t
+{
+    unsigned int* localVars;
+    VariableValue* maxstack;
+    int function_count;
+    function_frame_t* function_frame;
+    VariableValue* top;
+    unsigned int inparamcount;
+    unsigned int outparamcount;
+    function_frame_t function_frame_start[32];
+    VariableValue stack[2048];
+};
+
+struct trace_t
+{ 
+    float fraction; 
+    float normal[3]; 
+    int surfaceFlags; 
+    int contents; 
+    const char* material; 
+    TraceHitType hitType; 
+    unsigned short hitId; 
+    unsigned short modelIndex;
+    unsigned short partName;
+    unsigned short partGroup;
+    bool allsolid; 
+    bool startsolid; 
+    bool walkable; 
+};

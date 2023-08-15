@@ -14,6 +14,9 @@ namespace
 
     // universal
     static symbol<int()> Sys_Milliseconds{ 0x1E339C };
+    static symbol<unsigned int(const char* str, int user)> SL_GetString{ 0x229078 };
+    static symbol<const char* (unsigned int stringValue)> SL_ConvertToString{ 0x228630 };
+    static symbol<void(const float* angles, float* forward, float* right, float* up)> AngleVectors{ 0x2723E8 };
 
     // assets
     static symbol<void(XAssetHeader* header, int type, const char* name, int allowCreateDefault)> DB_FindXAssetHeader{ 0xBB26C };
@@ -21,15 +24,31 @@ namespace
     // server
     static symbol<void(const char* string, int* entry)> G_SetLocalizedString{ 0x188EBC };
     static symbol<int(const char* string)> G_MaterialIndex{ 0x189008 };
+    static symbol<void(trace_t* results, const float* start, const float* end, int passEntityNum, int contentmask, unsigned char* priorityMap)> G_LocationalTrace{ 0x14ECC0 };
     static symbol<void(int arg, char* buffer, int bufferLength)> SV_Cmd_ArgvBuffer{ 0x2025C4 };
+    static symbol<void(int client, const char* cmd)> SV_GameSendServerCommand{ 0x2D94C8 };
+
+    // game script
+    static symbol<void(int value)> Scr_AddInt{ 0x238A28 };
+    static symbol<void(float value)> Scr_AddFloat{ 0x238B10 };
+    static symbol<void(const char* value)> Scr_AddString{ 0x2390A0 };
+    static symbol<void(const float* value)> Scr_AddVector{ 0x23939C };
+    static symbol<void(const gentity_s* value)> Scr_AddEntity{ 0x182EF8 };
+    static symbol<void(int type, VariableUnion* u)> RemoveRefToValue{ 0x22A398 };
+    static symbol<unsigned int(unsigned int threadId)> Scr_GetSelf{ 0x22BA0C };
 
     // renderer
     static symbol<void(float* color, unsigned char* bytes)> R_ConvertColorToBytes{ 0x374978 };
+
+    // client
+    static symbol<bool(int localClientNum)> CL_IsLocalClientInGame{ 0x81658 };
 
     /***************************************************************
      * Variables
      **************************************************************/
 
-    static game_hudelem_s* g_hudelems = (game_hudelem_s*)(0x10DB51C);
-    static level_locals_t& level = *(level_locals_t*)(0x10E6128);
+    static game_hudelem_s* g_hudelems = reinterpret_cast<game_hudelem_s*>(0x10DB51C);
+    static gentity_s* g_entities = reinterpret_cast<gentity_s*>(0x10EEAD8);
+    static level_locals_t& level = *reinterpret_cast<level_locals_t*>(0x10E6128);
+    static scrVmPub_t& scrVmPub = *reinterpret_cast<scrVmPub_t*>(0x1D7C0C8);
 }

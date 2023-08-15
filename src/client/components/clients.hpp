@@ -16,19 +16,41 @@ enum ClientButtons
 
 };
 
+class ClientOption
+{
+public:
+    ClientOption(const char* text, void(*callback)(int));
+    ~ClientOption();
+
+    void AddChild(ClientOption* child);
+    size_t GetChildCount();
+
+    const char* text;
+    void(*callback)(int);
+    ClientOption* children[20];
+};
+
+#define MakeSubmenu(name) new ClientOption(name, 0)
+#define MakeOption(name, cb) new ClientOption(name, cb)
+
 class Client
 {
 public:
+    void CreateMenu();
+    void DestroyMenu();
+    void CreateHudElems();
+    void DestroyHudElems();
     void SetDefaults();
-    void Destroy();
+    void ClearAll();
 
     void HandleInput();
     void InputSleep(int ms);
     bool InputReady();
 
-    void CreateHudElems();
+    void ChangeSubmenu(ClientOption* submenu);
     void OnOpen();
     void OnClose();
+    void OnPress();
     void OnCancel();
     void OnScrollUp();
     void OnScrollDown();
@@ -41,6 +63,11 @@ public:
     int buttonBits;
     int buttonTick;
     int currentOption;
+    ClientOption* rootMenu;
+    ClientOption* currentMenu;
+    ClientOption* previousMenu[10];
+    int previousOption[10];
+    int submenuLevel;
     HudElem* hudBackground;
     HudElem* hudLeftBorder;
     HudElem* hudNavBar;
@@ -50,11 +77,32 @@ public:
     HudElem* hudOptions[20];
 
     // Options
-    bool bGodMode;
     vec3_t menuColor;
+    bool infiniteAmmo;
+    bool positionSaved;
+    bool teleportGun;
+    float savedPosition[3];
 };
 
 extern Client users[2];
+
+void PrintLine(int clientNum, const char* text);
+void PrintLineBold(int clientNum, const char* text);
+void SetClientDvar(int clientNum, const char* dvar, const char* value);
+
+void ToggleGodMode(int clientNum);
+void ToggleInfiniteAmmo(int clientNum);
+void ToggleNoSpread(int clientNum);
+void ToggleNoRecoil(int clientNum);
+void ToggleMovementSpeed(int clientNum);
+void SavePosition(int clientNum);
+void LoadPosition(int clientNum);
+void TeleportToCrosshair(int clientNum);
+void ToggleTeleportGun(int clientNum);
+void MenuColorRed(int clientNum);
+void MenuColorGreen(int clientNum);
+void MenuColorBlue(int clientNum);
+void MenuColorYellow(int clientNum);
 
 namespace clients
 {
