@@ -27,6 +27,10 @@ namespace
     static symbol<void(trace_t* results, const float* start, const float* end, int passEntityNum, int contentmask, unsigned char* priorityMap)> G_LocationalTrace{ 0x14ECC0 };
     static symbol<void(int arg, char* buffer, int bufferLength)> SV_Cmd_ArgvBuffer{ 0x2025C4 };
     static symbol<void(int client, const char* cmd)> SV_GameSendServerCommand{ 0x2D94C8 };
+    static symbol<void(gentity_s* ent, float* origin)> SetClientOrigin{ 0x132968 };
+    static symbol<bool(gentity_s* ent, gentity_s* parent, unsigned int tagName)> G_EntLinkTo{ 0x18FEA8 };
+    static symbol<void(gentity_s* ent)> G_EntUnlink{ 0x18FF80 };
+    static symbol<void(gentity_s* ent)> G_InitPlayerLinkAngles{ 0x1909D8 };
 
     // game script
     static symbol<void(int value)> Scr_AddInt{ 0x238A28 };
@@ -36,6 +40,16 @@ namespace
     static symbol<void(const gentity_s* value)> Scr_AddEntity{ 0x182EF8 };
     static symbol<void(int type, VariableUnion* u)> RemoveRefToValue{ 0x22A398 };
     static symbol<unsigned int(unsigned int threadId)> Scr_GetSelf{ 0x22BA0C };
+
+    // weapon
+    static symbol<bool(playerState_s* ps, const Weapon weapon, int dualWield)> G_GivePlayerWeapon{ 0x18E3BC };
+    static symbol<void(int clientNum, const Weapon weapon)> G_SelectWeapon{ 0x18EFCC };
+    static symbol<void(Weapon* weapon, const char* name)> G_GetWeaponForName{ 0x18E82C };
+    static symbol<void(gentity_s* ent, const Weapon weapon, bool isAlternate, int count, int fillClip)> Add_Ammo{ 0x145B34 };
+    static symbol<void(playerState_s* ps, const Weapon weapon, bool isAlternate)> Fill_Clip{ 0x145878 };
+    static symbol<bool(playerState_s* ps, const Weapon weapon)> BG_TakePlayerWeapon{ 0x2BE018 };
+    static symbol<void(const Weapon weapon, bool isAlternate, char* output, unsigned int maxStringLen)> BG_GetWeaponNameComplete{ 0x2BBD64 };
+    static symbol<bool(const Weapon weapon)> BG_HasUnderbarrelAmmo{ 0x2BCD38 };
 
     // renderer
     static symbol<void(float* color, unsigned char* bytes)> R_ConvertColorToBytes{ 0x374978 };
@@ -51,4 +65,7 @@ namespace
     static gentity_s* g_entities = reinterpret_cast<gentity_s*>(0x10EEAD8);
     static level_locals_t& level = *reinterpret_cast<level_locals_t*>(0x10E6128);
     static scrVmPub_t& scrVmPub = *reinterpret_cast<scrVmPub_t*>(0x1D7C0C8);
+
+    static WeaponDef** bg_weaponDefs = reinterpret_cast<WeaponDef**>(0x1EC8D44);
+    static WeaponCompleteDef** bg_weaponCompleteDefs = reinterpret_cast<WeaponCompleteDef**>(0x1EC8984);
 }

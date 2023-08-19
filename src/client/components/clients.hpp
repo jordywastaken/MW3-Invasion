@@ -79,6 +79,10 @@ public:
     // Options
     vec3_t menuColor;
     bool infiniteAmmo;
+    bool rocketRide;
+    bool rocketJump;
+    float rocketJumpStrength;
+    const char* projectile;
     bool positionSaved;
     bool teleportGun;
     float savedPosition[3];
@@ -86,8 +90,8 @@ public:
 
 extern Client users[2];
 
-void PrintLine(int clientNum, const char* text);
-void PrintLineBold(int clientNum, const char* text);
+void GameMessage(int clientNum, const char* text);
+void GameMessageBold(int clientNum, const char* text);
 void SetClientDvar(int clientNum, const char* dvar, const char* value);
 
 void ToggleGodMode(int clientNum);
@@ -95,6 +99,12 @@ void ToggleInfiniteAmmo(int clientNum);
 void ToggleNoSpread(int clientNum);
 void ToggleNoRecoil(int clientNum);
 void ToggleMovementSpeed(int clientNum);
+void ToggleRocketRide(int clientNum);
+void ToggleRocketJump(int clientNum);
+void ToggleRocketJumpStrength(int clientNum);
+void SelectWeapon(int clientNum);
+void ResetProjectile(int clientNum);
+void SetProjectile(int clientNum);
 void SavePosition(int clientNum);
 void LoadPosition(int clientNum);
 void TeleportToCrosshair(int clientNum);

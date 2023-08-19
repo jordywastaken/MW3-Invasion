@@ -17,6 +17,8 @@ static constexpr int ClientMenuFadeInDuration = 400;
 static constexpr int ClientMenuSlideOutDuration = 400;
 static constexpr int ClientMenuFadeOutDuration = 400;
 
+static constexpr int ClientMenuScrollDuration = 175;
+
 static constexpr float ClientMenuX = 67.0;
 static constexpr float ClientMenuTitleY = 50.0;
 static constexpr float ClientMenuAuthorY = 70.0;
@@ -81,12 +83,68 @@ void Client::CreateMenu()
     mainModsMenu->AddChild(MakeOption("Movement speed x2", ToggleMovementSpeed));
     mainMenu->AddChild(mainModsMenu);
 
+    auto* funMenu = MakeSubmenu("Fun menu");
+    funMenu->AddChild(MakeOption("Rocket ride", ToggleRocketRide));
+    funMenu->AddChild(MakeOption("Rocket jump", ToggleRocketJump));
+    funMenu->AddChild(MakeOption("Rocket jump strength", ToggleRocketJumpStrength));
+    mainMenu->AddChild(funMenu);
+
+    //auto* perksMenu = MakeSubmenu("Perks menu");
+    //perksMenu->AddChild(MakeOption("Set all perks", 0));
+    //perksMenu->AddChild(MakeOption("Remove all perks", 0));
+    //mainMenu->AddChild(perksMenu);
+
+    auto* weaponMenu = MakeSubmenu("Weapon menu");
+    weaponMenu->AddChild(MakeSubmenu("Rifle menu"));
+    weaponMenu->AddChild(MakeSubmenu("Submachine gun menu"));
+    weaponMenu->AddChild(MakeSubmenu("Machine gun menu"));
+    weaponMenu->AddChild(MakeSubmenu("Shotgun menu"));
+    weaponMenu->AddChild(MakeSubmenu("Sniper menu"));
+    weaponMenu->AddChild(MakeSubmenu("Pistol menu"));
+    weaponMenu->AddChild(MakeSubmenu("Rocket launcher menu"));
+    mainMenu->AddChild(weaponMenu);
+
+    auto* projectileMenu = MakeSubmenu("Projectile menu");
+    projectileMenu->AddChild(MakeOption("None", ResetProjectile));
+    mainMenu->AddChild(projectileMenu);
+
+    for (int i = 0; i < 240; i++)
+    {
+        if (!bg_weaponCompleteDefs[i])
+            continue;
+
+        int childIndex = -1;
+        switch (bg_weaponCompleteDefs[i]->weapDef->weapClass)
+        {
+        case(WEAPCLASS_RIFLE): childIndex = 0; break;
+        case(WEAPCLASS_SMG): childIndex = 1; break;
+        case(WEAPCLASS_MG): childIndex = 2; break;
+        case(WEAPCLASS_SPREAD): childIndex = 3; break;
+        case(WEAPCLASS_SNIPER): childIndex = 4; break;
+        case(WEAPCLASS_PISTOL): childIndex = 5; break;
+        case(WEAPCLASS_ROCKETLAUNCHER): childIndex = 6; break;
+        }
+
+        if (childIndex != -1)
+        {
+            weaponMenu->children[childIndex]->AddChild(MakeOption(bg_weaponCompleteDefs[i]->szInternalName, SelectWeapon));
+        }
+
+        if (bg_weaponCompleteDefs[i]->weapDef->weapType == WEAPTYPE_PROJECTILE)
+        {
+            projectileMenu->AddChild(MakeOption(bg_weaponCompleteDefs[i]->szInternalName, SetProjectile));
+        }
+    }
+
     auto* teleportMenu = MakeSubmenu("Teleport menu");
     teleportMenu->AddChild(MakeOption("Save position", SavePosition));
     teleportMenu->AddChild(MakeOption("Load position", LoadPosition));
     teleportMenu->AddChild(MakeOption("Teleport to crosshair", TeleportToCrosshair));
     teleportMenu->AddChild(MakeOption("Teleport gun", ToggleTeleportGun));
     mainMenu->AddChild(teleportMenu);
+
+    //auto* lobbyMenu = MakeSubmenu("Lobby menu");
+    //mainMenu->AddChild(lobbyMenu);
 
     auto* settingsMenu = MakeSubmenu("Settings menu");
     settingsMenu->AddChild(MakeOption("Theme red", MenuColorRed));
@@ -185,6 +243,10 @@ void Client::SetDefaults()
 
     menuColor = { 0.008, 0.5, 0.2 };
     infiniteAmmo = false;
+    rocketRide = false;
+    rocketJump = false;
+    rocketJumpStrength = 128.0;
+    projectile = 0;
     positionSaved = false;
     teleportGun = false;
     savedPosition[0] = 0;
@@ -384,15 +446,15 @@ void Client::OnCancel()
 void Client::OnScrollUp()
 {
     currentOption = currentOption == 0 ? currentMenu->GetChildCount() - 1 : currentOption - 1;
-    hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, 200);
-    InputSleep(225);
+    hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, ClientMenuScrollDuration);
+    InputSleep(ClientMenuScrollDuration);
 }
 
 void Client::OnScrollDown()
 {
     currentOption = currentOption == (currentMenu->GetChildCount() - 1) ? 0 : currentOption + 1;
-    hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, 200);
-    InputSleep(225);
+    hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, ClientMenuScrollDuration);
+    InputSleep(ClientMenuScrollDuration);
 }
 
 void Client::Run()
@@ -406,16 +468,6 @@ void Client::Run()
 ///
 /// Game script functions
 /// 
-void Scr_ClearOutParams()
-{
-    while (scrVmPub.outparamcount)
-    {
-        RemoveRefToValue(scrVmPub.top->type, &scrVmPub.top->u);
-        --scrVmPub.top;
-        --scrVmPub.outparamcount;
-    }
-}
-
 float* GetPlayerAngles(int clientNum)
 {
     return level.clients[clientNum].ps.viewangles;
@@ -473,22 +525,31 @@ float* GetCrosshairPos(int clientNum)
     return BulletTrace(level.gentities[clientNum].s.number, startPos, endPos);
 }
 
-void MagicBullet(const char* weapon, float* start, float* end)
+void SetPosition(gentity_s* entity, float* position)
 {
-    Scr_AddVector(end);
-    Scr_AddVector(start);
-    Scr_AddString(weapon);
-    scrVmPub.outparamcount = 3;
-    hook::invoke<void>(0x162A38);
-    Scr_ClearOutParams();
+    if (entity->client)
+        return SetClientOrigin(entity, position);
+
+    entity->r.currentOrigin[0] = position[0];
+    entity->r.currentOrigin[1] = position[1];
+    entity->r.currentOrigin[2] = position[2];
+    entity->s.lerp.pos.trBase[0] = position[0];
+    entity->s.lerp.pos.trBase[1] = position[1];
+    entity->s.lerp.pos.trBase[2] = position[2];
+    entity->s.lerp.pos.trType = TR_STATIONARY;
+    entity->s.lerp.pos.trTime = 0;
+    entity->s.lerp.pos.trDuration = 0;
+    entity->s.lerp.pos.trDelta[0] = 0.0;
+    entity->s.lerp.pos.trDelta[1] = 0.0;
+    entity->s.lerp.pos.trDelta[2] = 0.0;
 }
 
-void PrintLine(int clientNum, const char* text)
+void GameMessage(int clientNum, const char* text)
 {
     SV_GameSendServerCommand(clientNum, va("gm \"%s\"", text));
 }
 
-void PrintLineBold(int clientNum, const char* text)
+void GameMessageBold(int clientNum, const char* text)
 {
     SV_GameSendServerCommand(clientNum, va("gmb \"%s\"", text));
 }
@@ -498,6 +559,108 @@ void SetClientDvar(int clientNum, const char* dvar, const char* value)
     SV_GameSendServerCommand(clientNum, va("setclientdvar \"%s\" \"%s\"", dvar, value));
 }
 
+void Scr_SetNumParams(int paramCount)
+{
+    scrVmPub.outparamcount = paramCount;
+}
+
+void Scr_ClearOutParams()
+{
+    while (scrVmPub.outparamcount)
+    {
+        RemoveRefToValue(scrVmPub.top->type, &scrVmPub.top->u);
+        --scrVmPub.top;
+        --scrVmPub.outparamcount;
+    }
+}
+
+void Scr_MagicBullet(const char* weapon, float* start, float* end)
+{
+    Scr_AddVector(end);
+    Scr_AddVector(start);
+    Scr_AddString(weapon);
+    Scr_SetNumParams(3);
+    hook::invoke<void>(0x162A38);
+    Scr_ClearOutParams();
+}
+
+Weapon GetCurrentWeapon(int clientNum)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    Weapon currentWeapon = client->ps.weapCommon.weapon.data ? client->ps.weapCommon.weapon : client->pers.cmd.weapon;
+
+    if (client->ps.weapCommon.weapFlags & (1 << 7) || !currentWeapon.data)
+        return Weapon();
+
+    return currentWeapon;
+}
+
+int GetEquippedWeaponIndex(int clientNum, const Weapon weapon)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    for (int i = 0; i < 15; i++)
+    {
+        if (client->ps.weaponsEquipped[i].data != weapon.data)
+            continue;
+
+        return i;
+    }
+    return -1;
+}
+
+bool HasWeapon(int clientNum, const Weapon weapon)
+{
+    return GetEquippedWeaponIndex(clientNum, weapon) != -1;
+}
+
+void TakeWeapon(int clientNum, const Weapon weapon)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    BG_TakePlayerWeapon(&client->ps, weapon);
+}
+
+void GiveWeapon(int clientNum, const Weapon weapon)
+{
+    if (HasWeapon(clientNum, weapon))
+        return;
+
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    if (G_GivePlayerWeapon(&client->ps, weapon, 0))
+    {
+        Add_Ammo(entity, weapon, false, 999, 1);
+
+        if (BG_HasUnderbarrelAmmo(weapon))
+        {
+            Add_Ammo(entity, weapon, true, 999, 1);
+        }
+    }
+}
+
+void SwitchToWeapon(int clientNum, const Weapon weapon, bool immediate)
+{
+    if (!HasWeapon(clientNum, weapon))
+        return;
+
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    if (immediate)
+    {
+        client->ps.weapCommon.weapon.data = 0;
+        client->ps.weapCommon.weapFlags |= (1 << 19);
+    }
+
+    G_SelectWeapon(clientNum, weapon);
+}
+
 void ToggleGodMode(int clientNum)
 {
     const int bit = (1 << 0);
@@ -505,14 +668,14 @@ void ToggleGodMode(int clientNum)
 
     value ^= bit;
 
-    PrintLine(clientNum, va("God mode: %s", (value & bit) == bit ? "^2On" : "^1Off"));
+    GameMessage(clientNum, va("God mode: %s", (value & bit) == bit ? "^2On" : "^1Off"));
 }
 
 void ToggleInfiniteAmmo(int clientNum)
 {
     users[clientNum].infiniteAmmo ^= 1;
 
-    PrintLine(clientNum, va("Infinite ammo: %s", users[clientNum].infiniteAmmo ? "^2On" : "^1Off"));
+    GameMessage(clientNum, va("Infinite ammo: %s", users[clientNum].infiniteAmmo ? "^2On" : "^1Off"));
 }
 
 void ToggleNoSpread(int clientNum)
@@ -523,7 +686,7 @@ void ToggleNoSpread(int clientNum)
     value ^= bit;
     level.clients[clientNum].ps.weapCommon.spreadOverride = 0;
 
-    PrintLine(clientNum, va("No spread: %s", (value & bit) == bit ? "^2On" : "^1Off"));
+    GameMessage(clientNum, va("No spread: %s", (value & bit) == bit ? "^2On" : "^1Off"));
 }
 
 void ToggleNoRecoil(int clientNum)
@@ -534,7 +697,7 @@ void ToggleNoRecoil(int clientNum)
     value ^= bit;
     level.clients[clientNum].ps.recoilScale = 0;
 
-    PrintLine(clientNum, va("No recoil: %s", (value & bit) == bit ? "^2On" : "^1Off"));
+    GameMessage(clientNum, va("No recoil: %s", (value & bit) == bit ? "^2On" : "^1Off"));
 }
 
 void ToggleMovementSpeed(int clientNum)
@@ -543,7 +706,63 @@ void ToggleMovementSpeed(int clientNum)
 
     speedScale = (speedScale == 2.0) ? 1.0 : 2.0;
 
-    PrintLine(clientNum, va("Movement speed x2: %s", (speedScale == 2.0) ? "^2On" : "^1Off"));
+    GameMessage(clientNum, va("Movement speed x2: %s", (speedScale == 2.0) ? "^2On" : "^1Off"));
+}
+
+void ToggleRocketRide(int clientNum)
+{
+    users[clientNum].rocketRide ^= 1;
+
+    GameMessage(clientNum, va("Rocket ride: %s", users[clientNum].rocketRide ? "^2On" : "^1Off"));
+}
+
+void ToggleRocketJump(int clientNum)
+{
+    users[clientNum].rocketJump ^= 1;
+
+    GameMessage(clientNum, va("Rocket jump: %s", users[clientNum].rocketJump ? "^2On" : "^1Off"));
+}
+
+void ToggleRocketJumpStrength(int clientNum)
+{
+    users[clientNum].rocketJumpStrength += 64.0;
+
+    if (users[clientNum].rocketJumpStrength > 512.0)
+        users[clientNum].rocketJumpStrength = 128.0;
+
+    GameMessage(clientNum, va("Rocket jump strength set to: ^2%.0f", users[clientNum].rocketJumpStrength));
+}
+
+void SelectWeapon(int clientNum)
+{
+    auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
+    const char* weaponName = currentOption->text;
+
+    Weapon weapon;
+    G_GetWeaponForName(&weapon, weaponName);
+
+    if (HasWeapon(clientNum, weapon))
+        return GameMessage(clientNum, "^1Error^7: You already have this weapon");
+
+    TakeWeapon(clientNum, GetCurrentWeapon(clientNum));
+    GiveWeapon(clientNum, weapon);
+    SwitchToWeapon(clientNum, weapon, false);
+    GameMessage(clientNum, va("Weapon given: ^2%s", weaponName));
+}
+
+void ResetProjectile(int clientNum)
+{
+    users[clientNum].projectile = 0;
+    GameMessage(clientNum, "Projectile set to: ^2None");
+}
+
+void SetProjectile(int clientNum)
+{
+    auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
+    const char* projectileName = currentOption->text;
+
+    users[clientNum].projectile = projectileName;
+    GameMessage(clientNum, va("Projectile set to: ^2%s", projectileName));
 }
 
 void SavePosition(int clientNum)
@@ -553,50 +772,40 @@ void SavePosition(int clientNum)
     users[clientNum].savedPosition[2] = level.clients[clientNum].ps.origin[2];
     users[clientNum].positionSaved = true;
 
-    PrintLine(clientNum, "Position: ^2Saved!");
+    GameMessage(clientNum, "Position: ^2Saved!");
 }
 
 void LoadPosition(int clientNum)
 {
-    if (users[clientNum].positionSaved)
-    {
-        level.clients[clientNum].ps.origin[0] = users[clientNum].savedPosition[0];
-        level.clients[clientNum].ps.origin[1] = users[clientNum].savedPosition[1];
-        level.clients[clientNum].ps.origin[2] = users[clientNum].savedPosition[2];
+    if (!users[clientNum].positionSaved)
+        return GameMessage(clientNum, "^1Error^7: Position wasn't saved!");
 
-        PrintLine(clientNum, "Position: ^2Loaded!");
-    }
-    else
-    {
-        PrintLine(clientNum, "^1Error^7: Position wasn't saved!");
-    }
+    SetPosition(&level.gentities[clientNum], users[clientNum].savedPosition);
+    GameMessage(clientNum, "Position: ^2Loaded!");
 }
 
 void TeleportToCrosshair(int clientNum)
 {
-    float* crosshairPosition = GetCrosshairPos(clientNum);
-    level.clients[clientNum].ps.origin[0] = crosshairPosition[0];
-    level.clients[clientNum].ps.origin[1] = crosshairPosition[1];
-    level.clients[clientNum].ps.origin[2] = crosshairPosition[2];
-
-    PrintLine(clientNum, "Teleported to crosshair!");
+    SetPosition(&level.gentities[clientNum], GetCrosshairPos(clientNum));
+    GameMessage(clientNum, "Teleported to crosshair!");
 }
 
 void ToggleTeleportGun(int clientNum)
 {
     users[clientNum].teleportGun ^= 1;
 
-    PrintLine(clientNum, va("Teleport gun: %s", users[clientNum].teleportGun ? "^2On" : "^1Off"));
+    GameMessage(clientNum, va("Teleport gun: %s", users[clientNum].teleportGun ? "^2On" : "^1Off"));
 }
 
 void MenuColorRed(int clientNum)
 {
-    users[clientNum].hudLeftBorder->SetRGB({ 0.9, 0.1, 0.01 }, 200);
-    users[clientNum].hudNavBar->SetRGB({ 0.9, 0.1, 0.01 }, 200);
-    users[clientNum].hudAuthor->SetRGB({ 0.9, 0.1, 0.01 }, 200);
-    users[clientNum].hudTitle->SetTextGlow({ 0.9, 0.1, 0.01 });
+    vec3_t color{ 0.9, 0.1, 0.01 };
+    users[clientNum].hudLeftBorder->SetRGB(color, 200);
+    users[clientNum].hudNavBar->SetRGB(color, 200);
+    users[clientNum].hudAuthor->SetRGB(color, 200);
+    users[clientNum].hudTitle->SetTextGlow(color);
 
-    PrintLine(clientNum, "Menu color: ^1red");
+    GameMessage(clientNum, "Menu color: ^1red");
 }
 
 void MenuColorGreen(int clientNum)
@@ -606,7 +815,7 @@ void MenuColorGreen(int clientNum)
     users[clientNum].hudAuthor->SetRGB({ 0.008, 0.5, 0.2 }, 200);
     users[clientNum].hudTitle->SetTextGlow({ 0.008, 0.5, 0.2 });
 
-    PrintLine(clientNum, "Menu color: ^2green");
+    GameMessage(clientNum, "Menu color: ^2green");
 }
 
 void MenuColorBlue(int clientNum)
@@ -616,7 +825,7 @@ void MenuColorBlue(int clientNum)
     users[clientNum].hudAuthor->SetRGB({ 0.0, 0.0, 1.0 }, 200);
     users[clientNum].hudTitle->SetTextGlow({ 0.0, 0.0, 1.0 });
 
-    PrintLine(clientNum, "Menu color: ^4blue");
+    GameMessage(clientNum, "Menu color: ^4blue");
 }
 
 void MenuColorYellow(int clientNum)
@@ -626,7 +835,7 @@ void MenuColorYellow(int clientNum)
     users[clientNum].hudAuthor->SetRGB({ 1.0, 1.0, 0.0 }, 200);
     users[clientNum].hudTitle->SetTextGlow({ 1.0, 1.0, 0.0 });
 
-    PrintLine(clientNum, "Menu color: ^3yellow");
+    GameMessage(clientNum, "Menu color: ^3yellow");
 }
 
 ///
@@ -762,8 +971,7 @@ void VM_Notify_Hook(unsigned int notifyListOwnerId, unsigned int stringValue, Va
 
             if (_sys_strcmp(notify, "weapon_fired") == 0)
             {
-                // Magic bullet
-                if (0)
+                if (users[clientNum].projectile)
                 {
                     float* viewPos = GetPlayerViewPos(clientNum);
 
@@ -780,12 +988,23 @@ void VM_Notify_Hook(unsigned int notifyListOwnerId, unsigned int stringValue, Va
                     endPos[2] = viewPos[2] + endForward[2];
 
                     float* tracePos = BulletTrace(entity->s.number, startPos, endPos);
-                    MagicBullet("rpg_survival", startPos, tracePos);
+                    Scr_MagicBullet(users[clientNum].projectile, startPos, tracePos);
                 }
 
                 if (users[clientNum].teleportGun)
                 {
                     TeleportToCrosshair(clientNum);
+                }
+            }
+
+            if (_sys_strcmp(notify, "missile_fire") == 0)
+            {
+                if (users[clientNum].rocketRide)
+                {
+                    gentity_s* rocket = &level.gentities[Scr_GetSelf(top->u.intValue)];
+
+                    if (G_EntLinkTo(entity, rocket, 0))
+                        G_InitPlayerLinkAngles(entity);
                 }
             }
         }
@@ -821,6 +1040,41 @@ void PM_WeaponUseAmmo_Hook(playerState_s* ps, const Weapon* weapon, bool isAlter
     PM_WeaponUseAmmo_Original(ps, weapon, isAlternate, amount, hand);
 }
 
+__attribute__((naked, noinline)) gentity_s* Weapon_RocketLauncher_Fire_Original(gentity_s* ent, const Weapon weapon, float spread, weaponParms* wp, const float* gunVel, missileFireParms* fireParms, missileFireParms* magicBullet)
+{
+    asm
+    (
+        "stdu      %r1, -0xF0(%r1);"
+        "mflr      %r0;"
+        "std       %r0, 0x100(%r1);"
+        "stfd      %f27, 0xC8(%r1);"
+        "lis       %r11, 0x18;"
+        "ori       %r11, %r11, 0xD940;"
+        "mtctr     %r11;"
+        "bctr;"
+    );
+    return 0;
+}
+
+gentity_s* Weapon_RocketLauncher_Fire_Hook(gentity_s* ent, const Weapon weapon, float spread, weaponParms* wp, const float* gunVel, missileFireParms* fireParms, missileFireParms* magicBullet)
+{
+    gentity_s* result = Weapon_RocketLauncher_Fire_Original(ent, weapon, spread, wp, gunVel, fireParms, magicBullet);
+
+    if (!ent->client)
+        return result;
+
+    int clientNum = ent->client->ps.clientNum;
+
+    if (users[clientNum].rocketJump)
+    {
+        ent->client->ps.velocity[0] -= wp->forward[0] * users[clientNum].rocketJumpStrength;
+        ent->client->ps.velocity[1] -= wp->forward[1] * users[clientNum].rocketJumpStrength;
+        ent->client->ps.velocity[2] -= wp->forward[2] * users[clientNum].rocketJumpStrength;
+    }
+
+    return result;
+}
+
 namespace clients
 {
     void start()
@@ -835,6 +1089,7 @@ namespace clients
         hook::jump(0x12F708, *reinterpret_cast<uintptr_t*>(ClientThink_real_Hook));
         hook::jump(0x2314B8, *reinterpret_cast<uintptr_t*>(VM_Notify_Hook));
         hook::jump(0x2BADA4, *reinterpret_cast<uintptr_t*>(PM_WeaponUseAmmo_Hook));
+        hook::jump(0x18D930, *reinterpret_cast<uintptr_t*>(Weapon_RocketLauncher_Fire_Hook));
     }
 
     void stop()
@@ -843,6 +1098,7 @@ namespace clients
         hook::copy(0x12F708, *reinterpret_cast<uint32_t**>(ClientThink_real_Original), 4);
         hook::copy(0x2314B8, *reinterpret_cast<uint32_t**>(VM_Notify_Original), 4);
         hook::copy(0x2BADA4, *reinterpret_cast<uint32_t**>(PM_WeaponUseAmmo_Original), 4);
+        hook::copy(0x18D930, *reinterpret_cast<uint32_t**>(Weapon_RocketLauncher_Fire_Original), 4);
 
         for (auto& user : users)
             user.ClearAll();
