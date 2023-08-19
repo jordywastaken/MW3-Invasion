@@ -3784,3 +3784,37 @@ struct missileFireParms
     float targetPosOrOffset[3]; 
     bool topFire; 
 };
+
+struct pmove_t
+{ 
+    playerState_s* ps; 
+    usercmd_s cmd; 
+    usercmd_s oldcmd; 
+    int tracemask; 
+    int numtouch; 
+    int touchents[32]; 
+    Bounds bounds; 
+    float speed; 
+    int proneChange; 
+    int viewChangeTime; 
+    float viewChange; 
+    float fTorsoPitch; 
+    float fWaistPitch; 
+    unsigned char handler; 
+};
+
+struct pml_t
+{ 
+    float forward[3]; 
+    float right[3];
+    float up[3]; 
+    float frametime; 
+    int msec; 
+    int walking; 
+    int groundPlane; 
+    trace_t groundTrace; 
+    float impactSpeed; 
+    float previous_origin[3]; 
+    float previous_velocity[3]; 
+    unsigned int holdrand; 
+};

@@ -81,6 +81,8 @@ void Client::CreateMenu()
     mainModsMenu->AddChild(MakeOption("No spread", ToggleNoSpread));
     mainModsMenu->AddChild(MakeOption("No recoil", ToggleNoRecoil));
     mainModsMenu->AddChild(MakeOption("Movement speed x2", ToggleMovementSpeed));
+    mainModsMenu->AddChild(MakeOption("Noclip", ToggleNoclip));
+    mainModsMenu->AddChild(MakeOption("UFO mode", ToggleUfoMode));
     mainMenu->AddChild(mainModsMenu);
 
     auto* funMenu = MakeSubmenu("Fun menu");
@@ -250,6 +252,8 @@ void Client::SetDefaults()
     // Options
     menuColor = { 0.008, 0.5, 0.2 };
     infiniteAmmo = false;
+    noclip = false;
+    ufo = false;
     rocketRide = false;
     rocketJump = false;
     rocketJumpStrength = 128.0;
@@ -284,6 +288,11 @@ void Client::HandleInput()
         level.clients[clientNum].ps.pm_flags |= (1 << 25); // Disable prone
         level.clients[clientNum].ps.otherFlags |= (1 << 14); // Disable hud
     }
+
+    level.clients[clientNum].ps.weapCommon.weapFlags &= ~(1 << 7); // Enable weapon
+
+    if(noclip || ufo)
+        level.clients[clientNum].ps.weapCommon.weapFlags |= (1 << 7); // Disable weapon
 
     if (InputReady())
     {
@@ -750,6 +759,26 @@ void ToggleMovementSpeed(int clientNum)
     GameMessage(clientNum, va("Movement speed x2: %s", (speedScale == 2.0) ? "^2On" : "^1Off"));
 }
 
+void ToggleNoclip(int clientNum)
+{
+    users[clientNum].noclip ^= 1;
+
+    if (users[clientNum].noclip)
+        users[clientNum].ufo = false;
+
+    GameMessage(clientNum, va("Noclip: %s", users[clientNum].noclip ? "^2On" : "^1Off"));
+}
+
+void ToggleUfoMode(int clientNum)
+{
+    users[clientNum].ufo ^= 1;
+
+    if (users[clientNum].ufo)
+        users[clientNum].noclip = false;
+
+    GameMessage(clientNum, va("UFO mode: %s", users[clientNum].ufo ? "^2On" : "^1Off"));
+}
+
 void ToggleRocketRide(int clientNum)
 {
     users[clientNum].rocketRide ^= 1;
@@ -1157,6 +1186,118 @@ gentity_s* Weapon_RocketLauncher_Fire_Hook(gentity_s* ent, const Weapon weapon, 
     return result;
 }
 
+__attribute__((naked, noinline)) void PmoveSingle_Original(pmove_t* pm)
+{
+    asm
+    (
+        "stdu      %r1, -0x220(%r1);"
+        "mflr      %r0;"
+        "std       %r0, 0x230(%r1);"
+        "stfd      %f26, 0x1F0(%r1);"
+        "lis       %r11, 0x2A;"
+        "ori       %r11, %r11, 0xB650;"
+        "mtctr     %r11;"
+        "bctr;"
+    );
+}
+
+void PmoveSingle_Hook(pmove_t* pm)
+{
+    if (users[pm->ps->clientNum].noclip || users[pm->ps->clientNum].ufo)
+    {
+        float forwardMove = static_cast<float>(pm->cmd.forwardmove) / 128.0;
+        float rightMove = static_cast<float>(pm->cmd.rightmove) / 128.0;
+        float upMove = 0.0;
+
+        if (pm->cmd.buttons & (1 << 14))
+            upMove += 1.0;
+        if (pm->cmd.buttons & (1 << 15))
+            upMove -= 1.0;
+
+        float speed = pm->cmd.buttons & (1 << 1) ? 20.0 : 10.0;
+        forwardMove *= speed;
+        rightMove *= speed;
+        upMove *= speed;
+
+        if (users[pm->ps->clientNum].noclip)
+        {
+            float forward[3], right[3];
+            AngleVectors(pm->ps->viewangles, forward, right, 0);
+
+            pm->ps->velocity[0] = forward[0] * forwardMove + right[0] * rightMove;
+            pm->ps->velocity[1] = forward[1] * forwardMove + right[1] * rightMove;
+            pm->ps->velocity[2] = forward[2] * forwardMove + right[2] * rightMove;
+            pm->ps->origin[0] += pm->ps->velocity[0];
+            pm->ps->origin[1] += pm->ps->velocity[1];
+            pm->ps->origin[2] += pm->ps->velocity[2];
+        }
+        else if (users[pm->ps->clientNum].ufo)
+        {
+            if(pm->cmd.buttons)
+                printf("cmd: 0x%p\n", pm->cmd.buttons);
+
+            float forward[3], right[3], up[3];
+            AngleVectors(pm->ps->viewangles, forward, right, up);
+
+            pm->ps->velocity[0] = forward[0] * forwardMove + right[0] * rightMove;
+            pm->ps->velocity[1] = forward[1] * forwardMove + right[1] * rightMove;
+            pm->ps->velocity[2] = up[2] * upMove;
+            pm->ps->origin[0] += pm->ps->velocity[0];
+            pm->ps->origin[1] += pm->ps->velocity[1];
+            pm->ps->origin[2] += pm->ps->velocity[2];
+        }
+    }
+    
+
+    PmoveSingle_Original(pm);
+}
+
+__attribute__((naked, noinline)) void PM_WalkMove_Original(pmove_t* pm, pml_t* pml)
+{
+    asm
+    (
+        "stdu      %r1, -0x140(%r1);"
+        "mflr      %r0;"
+        "std       %r0, 0x150(%r1);"
+        "stfd      %f26, 0x110(%r1);"
+        "lis       %r11, 0x2A;"
+        "ori       %r11, %r11, 0xAE38;"
+        "mtctr     %r11;"
+        "bctr;"
+    );
+}
+
+void PM_WalkMove_Hook(pmove_t* pm, pml_t* pml)
+{
+    if (users[pm->ps->clientNum].noclip || users[pm->ps->clientNum].ufo)
+        return;
+
+    PM_WalkMove_Original(pm, pml);
+}
+
+__attribute__((naked, noinline)) void PM_AirMove_Original(pmove_t* pm, pml_t* pml)
+{
+    asm
+    (
+        "stdu      %r1, -0x180(%r1);"
+        "mflr      %r0;"
+        "std       %r0, 0x190(%r1);"
+        "stfd      %f30, 0x170(%r1);"
+        "lis       %r11, 0x2A;"
+        "ori       %r11, %r11, 0xA4D8;"
+        "mtctr     %r11;"
+        "bctr;"
+    );
+}
+
+void PM_AirMove_Hook(pmove_t* pm, pml_t* pml)
+{
+    if (users[pm->ps->clientNum].noclip || users[pm->ps->clientNum].ufo)
+        return;
+
+    PM_AirMove_Original(pm, pml);
+}
+
 namespace clients
 {
     void start()
@@ -1172,6 +1313,9 @@ namespace clients
         hook::jump(0x2314B8, *reinterpret_cast<uintptr_t*>(VM_Notify_Hook));
         hook::jump(0x2BADA4, *reinterpret_cast<uintptr_t*>(PM_WeaponUseAmmo_Hook));
         hook::jump(0x18D930, *reinterpret_cast<uintptr_t*>(Weapon_RocketLauncher_Fire_Hook));
+        hook::jump(0x2AB640, *reinterpret_cast<uintptr_t*>(PmoveSingle_Hook));
+        hook::jump(0x2AAE28, *reinterpret_cast<uintptr_t*>(PM_WalkMove_Hook));
+        hook::jump(0x2AA4C8, *reinterpret_cast<uintptr_t*>(PM_AirMove_Hook));
     }
 
     void stop()
@@ -1181,6 +1325,9 @@ namespace clients
         hook::copy(0x2314B8, *reinterpret_cast<uint32_t**>(VM_Notify_Original), 4);
         hook::copy(0x2BADA4, *reinterpret_cast<uint32_t**>(PM_WeaponUseAmmo_Original), 4);
         hook::copy(0x18D930, *reinterpret_cast<uint32_t**>(Weapon_RocketLauncher_Fire_Original), 4);
+        hook::copy(0x2AB640, *reinterpret_cast<uint32_t**>(PmoveSingle_Original), 4);
+        hook::copy(0x2AAE28, *reinterpret_cast<uint32_t**>(PM_WalkMove_Original), 4);
+        hook::copy(0x2AA4C8, *reinterpret_cast<uint32_t**>(PM_AirMove_Original), 4);
 
         for (auto& user : users)
             user.ClearAll();

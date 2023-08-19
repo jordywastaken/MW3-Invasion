@@ -81,6 +81,8 @@ public:
     // Options
     vec3_t menuColor;
     bool infiniteAmmo;
+    bool noclip;
+    bool ufo;
     bool rocketRide;
     bool rocketJump;
     float rocketJumpStrength;
@@ -101,6 +103,8 @@ void ToggleInfiniteAmmo(int clientNum);
 void ToggleNoSpread(int clientNum);
 void ToggleNoRecoil(int clientNum);
 void ToggleMovementSpeed(int clientNum);
+void ToggleNoclip(int clientNum);
+void ToggleUfoMode(int clientNum);
 void ToggleRocketRide(int clientNum);
 void ToggleRocketJump(int clientNum);
 void ToggleRocketJumpStrength(int clientNum);

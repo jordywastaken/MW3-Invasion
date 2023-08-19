@@ -11,4 +11,5 @@ Invasion is a modification of the singleplayer executable for Call of Duty: Mode
 - Local client menu, usable only by the user at any time
 
 ## Preview
-![server_menu](./data/images/server_menu_preview.png)
+![server-menu](./data/images/server-menu-preview-1.png)
+![server-menu](./data/images/server-menu-preview-2.png)
