@@ -41,7 +41,7 @@ namespace
     static symbol<void(int type, VariableUnion* u)> RemoveRefToValue{ 0x22A398 };
     static symbol<unsigned int(unsigned int threadId)> Scr_GetSelf{ 0x22BA0C };
 
-    // weapon
+    // weapon & perks
     static symbol<bool(playerState_s* ps, const Weapon weapon, int dualWield)> G_GivePlayerWeapon{ 0x18E3BC };
     static symbol<void(int clientNum, const Weapon weapon)> G_SelectWeapon{ 0x18EFCC };
     static symbol<void(Weapon* weapon, const char* name)> G_GetWeaponForName{ 0x18E82C };
@@ -50,6 +50,7 @@ namespace
     static symbol<bool(playerState_s* ps, const Weapon weapon)> BG_TakePlayerWeapon{ 0x2BE018 };
     static symbol<void(const Weapon weapon, bool isAlternate, char* output, unsigned int maxStringLen)> BG_GetWeaponNameComplete{ 0x2BBD64 };
     static symbol<bool(const Weapon weapon)> BG_HasUnderbarrelAmmo{ 0x2BCD38 };
+    static symbol<int(const char* perkName)> BG_GetPerkCodeIndexForName{ 0x2A35E8 };
 
     // renderer
     static symbol<void(float* color, unsigned char* bytes)> R_ConvertColorToBytes{ 0x374978 };
@@ -68,4 +69,5 @@ namespace
 
     static WeaponDef** bg_weaponDefs = reinterpret_cast<WeaponDef**>(0x1EC8D44);
     static WeaponCompleteDef** bg_weaponCompleteDefs = reinterpret_cast<WeaponCompleteDef**>(0x1EC8984);
+    static const char** bg_perkNames = reinterpret_cast<const char**>(0x6AEA00);
 }

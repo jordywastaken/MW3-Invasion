@@ -3,6 +3,8 @@
 
 #include "hudelems.hpp"
 
+static constexpr int ClientMaxOptions = 25;
+
 enum ClientButtons
 {
     CLIENT_BTN_CROSS = (1 << 0),
@@ -27,7 +29,7 @@ public:
 
     const char* text;
     void(*callback)(int);
-    ClientOption* children[20];
+    ClientOption* children[ClientMaxOptions];
 };
 
 #define MakeSubmenu(name) new ClientOption(name, 0)
@@ -74,7 +76,7 @@ public:
     HudElem* hudTitle;
     HudElem* hudAuthor;
     HudElem* hudCurrentMenu;
-    HudElem* hudOptions[20];
+    HudElem* hudOptions[ClientMaxOptions];
 
     // Options
     vec3_t menuColor;
@@ -102,6 +104,9 @@ void ToggleMovementSpeed(int clientNum);
 void ToggleRocketRide(int clientNum);
 void ToggleRocketJump(int clientNum);
 void ToggleRocketJumpStrength(int clientNum);
+void SetAllPerks(int clientNum);
+void ClearAllPerks(int clientNum);
+void SelectPerk(int clientNum);
 void SelectWeapon(int clientNum);
 void ResetProjectile(int clientNum);
 void SetProjectile(int clientNum);

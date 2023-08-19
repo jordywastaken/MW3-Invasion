@@ -29,13 +29,13 @@ static constexpr float ClientMenuOptionX = ClientMenuX + 7.5;
 ClientOption::ClientOption(const char* text, void(*callback)(int))
     : text(text), callback(callback)
 {
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < ClientMaxOptions; i++)
         children[i] = 0;
 }
 
 ClientOption::~ClientOption()
 {
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < ClientMaxOptions; i++)
     {
         if (!children[i])
             continue;
@@ -47,7 +47,7 @@ ClientOption::~ClientOption()
 
 void ClientOption::AddChild(ClientOption* child)
 {
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < ClientMaxOptions; i++)
     {
         if (children[i])
             continue;
@@ -60,7 +60,7 @@ void ClientOption::AddChild(ClientOption* child)
 size_t ClientOption::GetChildCount()
 {
     size_t count = 0;
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < ClientMaxOptions; i++)
     {
         if (children[i])
             ++count;
@@ -89,10 +89,13 @@ void Client::CreateMenu()
     funMenu->AddChild(MakeOption("Rocket jump strength", ToggleRocketJumpStrength));
     mainMenu->AddChild(funMenu);
 
-    //auto* perksMenu = MakeSubmenu("Perks menu");
-    //perksMenu->AddChild(MakeOption("Set all perks", 0));
-    //perksMenu->AddChild(MakeOption("Remove all perks", 0));
-    //mainMenu->AddChild(perksMenu);
+    auto* perksMenu = MakeSubmenu("Perks menu");
+    perksMenu->AddChild(MakeOption("Set all perks", SetAllPerks));
+    perksMenu->AddChild(MakeOption("Clear all perks", ClearAllPerks));
+    mainMenu->AddChild(perksMenu);
+
+    for (int i = 0; i < 21; i++)
+        perksMenu->AddChild(MakeOption(bg_perkNames[i], SelectPerk));
 
     auto* weaponMenu = MakeSubmenu("Weapon menu");
     weaponMenu->AddChild(MakeSubmenu("Rifle menu"));
@@ -112,6 +115,8 @@ void Client::CreateMenu()
     {
         if (!bg_weaponCompleteDefs[i])
             continue;
+
+        printf("bg_weaponCompleteDefs[%i]->szInternalName : \"%s\"\n", i, bg_weaponCompleteDefs[i]->szInternalName);
 
         int childIndex = -1;
         switch (bg_weaponCompleteDefs[i]->weapDef->weapClass)
@@ -192,7 +197,7 @@ void Client::CreateHudElems()
     hudCurrentMenu = CreateTextHudElem(clientNum, "Main menu", 1.6, ClientMenuOptionX, ClientMenuCurrentMenuY, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
     hudCurrentMenu->SetHorzAlign(HE_HORZALIGN_RIGHT);
 
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < ClientMaxOptions; i++)
     {
         hudOptions[i] = CreateTextHudElem(clientNum, currentMenu->children[i] ? currentMenu->children[i]->text : "", 1.0, ClientMenuOptionX, ClientMenuOptionY + (ClientMenuNavBarHeight * i), 2.0, { 1.0, 1.0, 1.0 }, 0.0);
         hudOptions[i]->SetHorzAlign(HE_HORZALIGN_RIGHT);
@@ -217,6 +222,7 @@ void Client::DestroyHudElems()
 
 void Client::SetDefaults()
 {
+    // Menu
     opened = false;
     buttonBits = 0;
     buttonTick = 0;
@@ -238,9 +244,10 @@ void Client::SetDefaults()
     hudAuthor = 0;
     hudCurrentMenu = 0;
 
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < ClientMaxOptions; i++)
         hudOptions[i] = 0;
 
+    // Options
     menuColor = { 0.008, 0.5, 0.2 };
     infiniteAmmo = false;
     rocketRide = false;
@@ -332,7 +339,7 @@ void Client::ChangeSubmenu(ClientOption* submenu)
     hudNavBar->SetAlpha(0.0);
     hudNavBar->SetAlpha(0.5, ClientMenuFadeInDuration);
 
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < ClientMaxOptions; i++)
     {
         hudOptions[i]->SetText(submenu->children[i] ? submenu->children[i]->text : "");
         hudOptions[i]->SetAlpha(0.0);
@@ -584,6 +591,40 @@ void Scr_MagicBullet(const char* weapon, float* start, float* end)
     Scr_ClearOutParams();
 }
 
+bool HasPerk(int clientNum, int perkIndex)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    if (perkIndex == 21)
+        return false;
+
+    int perkBit = (1 << (perkIndex & 31));
+    return (client->ps.perks[perkIndex >> 5] & perkBit) == perkBit;
+}
+
+void SetPerk(int clientNum, int perkIndex)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    if (perkIndex == 21)
+        return;
+
+    client->ps.perks[perkIndex >> 5] |= (1 << (perkIndex & 31));
+}
+
+void UnsetPerk(int clientNum, int perkIndex)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    if (perkIndex == 21)
+        return;
+
+    client->ps.perks[perkIndex >> 5] &= ~(1 << (perkIndex & 31));
+}
+
 Weapon GetCurrentWeapon(int clientNum)
 {
     gentity_s* entity = &level.gentities[clientNum];
@@ -731,6 +772,47 @@ void ToggleRocketJumpStrength(int clientNum)
         users[clientNum].rocketJumpStrength = 128.0;
 
     GameMessage(clientNum, va("Rocket jump strength set to: ^2%.0f", users[clientNum].rocketJumpStrength));
+}
+
+void SetAllPerks(int clientNum)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    client->ps.perks[0] = 0;
+    client->ps.perks[1] = 0;
+    for (int slot = 0; slot < 9; slot++)
+        client->ps.perkSlots[slot] = 0;
+
+    for (int perk = 0; perk < 21; perk++)
+        SetPerk(clientNum, perk);
+
+    GameMessage(clientNum, "All perks: ^2set");
+}
+
+void ClearAllPerks(int clientNum)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    gclient_s* client = entity->client;
+
+    client->ps.perks[0] = 0;
+    client->ps.perks[1] = 0;
+    for (int i = 0; i < 9; i++)
+        client->ps.perkSlots[i] = 0;
+
+    GameMessage(clientNum, "All perks: ^2cleared");
+}
+
+void SelectPerk(int clientNum)
+{
+    auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
+    const char* perkName = currentOption->text;
+
+    int perkIndex = BG_GetPerkCodeIndexForName(perkName);
+
+    (HasPerk(clientNum, perkIndex) ? UnsetPerk : SetPerk)(clientNum, perkIndex);
+
+    GameMessage(clientNum, va("%s: ^2%s", HasPerk(clientNum, perkIndex) ? "Set perk" : "Removed perk", perkName));
 }
 
 void SelectWeapon(int clientNum)
