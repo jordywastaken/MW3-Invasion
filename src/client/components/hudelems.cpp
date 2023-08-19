@@ -9,7 +9,7 @@ game_hudelem_s* HudElem::Alloc(int client)
         if (g_hudelems[i].elem.type == HE_TYPE_FREE)
         {
             auto* hud = &g_hudelems[i];
-            printf("HudElem::Alloc -> 0x%p\n", hud);
+            debug_print("HudElem::Alloc -> 0x%p\n", hud);
             hud->clientNum = client;
             return hud;
         }

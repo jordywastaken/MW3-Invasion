@@ -118,7 +118,7 @@ void Client::CreateMenu()
         if (!bg_weaponCompleteDefs[i])
             continue;
 
-        printf("bg_weaponCompleteDefs[%i]->szInternalName : \"%s\"\n", i, bg_weaponCompleteDefs[i]->szInternalName);
+        debug_print("bg_weaponCompleteDefs[%i]->szInternalName : \"%s\"\n", i, bg_weaponCompleteDefs[i]->szInternalName);
 
         int childIndex = -1;
         switch (bg_weaponCompleteDefs[i]->weapDef->weapClass)
@@ -256,7 +256,7 @@ void Client::SetDefaults()
     ufo = false;
     rocketRide = false;
     rocketJump = false;
-    rocketJumpStrength = 128.0;
+    rocketJumpStrength = 256.0;
     projectile = 0;
     positionSaved = false;
     teleportGun = false;
@@ -795,10 +795,10 @@ void ToggleRocketJump(int clientNum)
 
 void ToggleRocketJumpStrength(int clientNum)
 {
-    users[clientNum].rocketJumpStrength += 64.0;
+    users[clientNum].rocketJumpStrength += 256.0;
 
-    if (users[clientNum].rocketJumpStrength > 512.0)
-        users[clientNum].rocketJumpStrength = 128.0;
+    if (users[clientNum].rocketJumpStrength > 1024.0)
+        users[clientNum].rocketJumpStrength = 256.0;
 
     GameMessage(clientNum, va("Rocket jump strength set to: ^2%.0f", users[clientNum].rocketJumpStrength));
 }
@@ -1037,7 +1037,7 @@ void ClientThink_real_Hook(gentity_s* ent)
 {
     if (!CL_IsLocalClientInGame(0))
     {
-        printf("Destroying all menus\n");
+        debug_print("Destroying all menus\n");
         for (auto& user : users)
             user.ClearAll();
     }
@@ -1081,7 +1081,7 @@ void VM_Notify_Hook(unsigned int notifyListOwnerId, unsigned int stringValue, Va
             int clientNum = client->ps.clientNum;
             const char* notify = SL_ConvertToString(stringValue);
 
-            printf("VM_Notify: client %i '%s'\n", clientNum, notify);
+            debug_print("VM_Notify: client %i '%s'\n", clientNum, notify);
 
             if (_sys_strcmp(notify, "weapon_fired") == 0)
             {

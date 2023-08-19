@@ -20,6 +20,8 @@ SYS_MODULE_STOP(_Z12InvasionStopv);
 
 int InvasionStart()
 {
+    debug_print("[Invasion]: Started\n");
+
     // utils
     hook::start(init_proc, 20);
 
@@ -32,6 +34,8 @@ int InvasionStart()
 
 int InvasionStop()
 {
+    debug_print("[Invasion]: Stopped\n");
+
     // utils 
     hook::stop();
 

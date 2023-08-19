@@ -8,6 +8,7 @@
 
 #include "common/utils/hooking.hpp"
 
+#pragma diag_suppress 1070
 template<typename T>
 class symbol
 {
@@ -39,3 +40,9 @@ static T clamp(T value, T min, T max)
 }
 
 #include "symbols.hpp"
+
+#ifdef _DEBUG
+#define debug_print(fmt, ...) printf(fmt, __VA_ARGS__)
+#else
+#define debug_print(fmt, ...)
+#endif
