@@ -118,10 +118,10 @@ void SavePosition(int clientNum);
 void LoadPosition(int clientNum);
 void TeleportToCrosshair(int clientNum);
 void ToggleTeleportGun(int clientNum);
-void MenuColorRed(int clientNum);
-void MenuColorGreen(int clientNum);
-void MenuColorBlue(int clientNum);
-void MenuColorYellow(int clientNum);
+void ThemeColorRed(int clientNum);
+void ThemeColorGreen(int clientNum);
+void ThemeColorBlue(int clientNum);
+void ThemeColorYellow(int clientNum);
 
 namespace clients
 {

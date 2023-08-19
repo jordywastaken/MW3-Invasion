@@ -154,10 +154,10 @@ void Client::CreateMenu()
     //mainMenu->AddChild(lobbyMenu);
 
     auto* settingsMenu = MakeSubmenu("Settings menu");
-    settingsMenu->AddChild(MakeOption("Theme red", MenuColorRed));
-    settingsMenu->AddChild(MakeOption("Theme green", MenuColorGreen));
-    settingsMenu->AddChild(MakeOption("Theme blue", MenuColorBlue));
-    settingsMenu->AddChild(MakeOption("Theme yellow", MenuColorYellow));
+    settingsMenu->AddChild(MakeOption("Theme color red", ThemeColorRed));
+    settingsMenu->AddChild(MakeOption("Theme color green", ThemeColorGreen));
+    settingsMenu->AddChild(MakeOption("Theme color blue", ThemeColorBlue));
+    settingsMenu->AddChild(MakeOption("Theme color yellow", ThemeColorYellow));
     mainMenu->AddChild(settingsMenu);
 
     rootMenu = mainMenu;
@@ -908,7 +908,7 @@ void ToggleTeleportGun(int clientNum)
     GameMessage(clientNum, va("Teleport gun: %s", users[clientNum].teleportGun ? "^2On" : "^1Off"));
 }
 
-void MenuColorRed(int clientNum)
+void ThemeColorRed(int clientNum)
 {
     vec3_t color{ 0.9, 0.1, 0.01 };
     users[clientNum].hudLeftBorder->SetRGB(color, 200);
@@ -916,37 +916,40 @@ void MenuColorRed(int clientNum)
     users[clientNum].hudAuthor->SetRGB(color, 200);
     users[clientNum].hudTitle->SetTextGlow(color);
 
-    GameMessage(clientNum, "Menu color: ^1red");
+    GameMessage(clientNum, "Theme color: ^1red");
 }
 
-void MenuColorGreen(int clientNum)
+void ThemeColorGreen(int clientNum)
 {
-    users[clientNum].hudLeftBorder->SetRGB({ 0.008, 0.5, 0.2 }, 200);
-    users[clientNum].hudNavBar->SetRGB({ 0.008, 0.5, 0.2 }, 200);
-    users[clientNum].hudAuthor->SetRGB({ 0.008, 0.5, 0.2 }, 200);
-    users[clientNum].hudTitle->SetTextGlow({ 0.008, 0.5, 0.2 });
+    vec3_t color{ 0.008, 0.5, 0.2 };
+    users[clientNum].hudLeftBorder->SetRGB(color, 200);
+    users[clientNum].hudNavBar->SetRGB(color, 200);
+    users[clientNum].hudAuthor->SetRGB(color, 200);
+    users[clientNum].hudTitle->SetTextGlow(color);
 
-    GameMessage(clientNum, "Menu color: ^2green");
+    GameMessage(clientNum, "Theme color: ^2green");
 }
 
-void MenuColorBlue(int clientNum)
+void ThemeColorBlue(int clientNum)
 {
-    users[clientNum].hudLeftBorder->SetRGB({ 0.0, 0.0, 1.0 }, 200);
-    users[clientNum].hudNavBar->SetRGB({ 0.0, 0.0, 1.0 }, 200);
-    users[clientNum].hudAuthor->SetRGB({ 0.0, 0.0, 1.0 }, 200);
-    users[clientNum].hudTitle->SetTextGlow({ 0.0, 0.0, 1.0 });
+    vec3_t color{ 0.0, 0.0, 1.0 };
+    users[clientNum].hudLeftBorder->SetRGB(color, 200);
+    users[clientNum].hudNavBar->SetRGB(color, 200);
+    users[clientNum].hudAuthor->SetRGB(color, 200);
+    users[clientNum].hudTitle->SetTextGlow(color);
 
-    GameMessage(clientNum, "Menu color: ^4blue");
+    GameMessage(clientNum, "Theme color: ^4blue");
 }
 
-void MenuColorYellow(int clientNum)
+void ThemeColorYellow(int clientNum)
 {
-    users[clientNum].hudLeftBorder->SetRGB({ 1.0, 1.0, 0.0 }, 200);
-    users[clientNum].hudNavBar->SetRGB({ 1.0, 1.0, 0.0 }, 200);
-    users[clientNum].hudAuthor->SetRGB({ 1.0, 1.0, 0.0 }, 200);
-    users[clientNum].hudTitle->SetTextGlow({ 1.0, 1.0, 0.0 });
+    vec3_t color{ 1.0, 1.0, 0.0 };
+    users[clientNum].hudLeftBorder->SetRGB(color, 200);
+    users[clientNum].hudNavBar->SetRGB(color, 200);
+    users[clientNum].hudAuthor->SetRGB(color, 200);
+    users[clientNum].hudTitle->SetTextGlow(color);
 
-    GameMessage(clientNum, "Menu color: ^3yellow");
+    GameMessage(clientNum, "Theme color: ^3yellow");
 }
 
 ///
@@ -1233,9 +1236,6 @@ void PmoveSingle_Hook(pmove_t* pm)
         }
         else if (users[pm->ps->clientNum].ufo)
         {
-            if(pm->cmd.buttons)
-                printf("cmd: 0x%p\n", pm->cmd.buttons);
-
             float forward[3], right[3], up[3];
             AngleVectors(pm->ps->viewangles, forward, right, up);
 
