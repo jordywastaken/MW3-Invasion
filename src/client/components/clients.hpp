@@ -9,13 +9,27 @@ enum ClientButtons
 {
     CLIENT_BTN_CROSS = (1 << 0),
     CLIENT_BTN_CIRCLE = (1 << 1),
-    CLIENT_BTN_DPAD_UP = (1 << 2),
-    CLIENT_BTN_DPAD_DOWN = (1 << 3),
-    CLIENT_BTN_DPAD_LEFT = (1 << 4),
-    CLIENT_BTN_DPAD_RIGHT = (1 << 5),
-    CLIENT_BTN_L1 = (1 << 6),
-    CLIENT_BTN_R3 = (1 << 7),
+    CLIENT_BTN_SQUARE = (1 << 2),
+    CLIENT_BTN_DPAD_UP = (1 << 3),
+    CLIENT_BTN_DPAD_DOWN = (1 << 4),
+    CLIENT_BTN_DPAD_LEFT = (1 << 5),
+    CLIENT_BTN_DPAD_RIGHT = (1 << 6),
+    CLIENT_BTN_L1 = (1 << 7),
+    CLIENT_BTN_L2 = (1 << 8),
+    CLIENT_BTN_L3 = (1 << 9),
+    CLIENT_BTN_R1 = (1 << 10),
+    CLIENT_BTN_R2 = (1 << 11),
+    CLIENT_BTN_R3 = (1 << 12),
+};
 
+enum ClientTheme
+{
+    CLIENT_THEME_MATRIX,
+    CLIENT_THEME_APO_KARMA,
+    CLIENT_THEME_ENSTONE_SMALL,
+    CLIENT_THEME_ENSTONE_LARGE,
+    CLIENT_THEME_ENSTONE_RIGHT,
+    CLIENT_THEME_ENSTONE_SMALL2
 };
 
 class ClientOption
@@ -25,6 +39,7 @@ public:
     ~ClientOption();
 
     void AddChild(ClientOption* child);
+    void AddChild(const char* text, void(*callback)(int));
     size_t GetChildCount();
 
     const char* text;
@@ -57,6 +72,9 @@ public:
     void OnScrollUp();
     void OnScrollDown();
 
+    void SetTheme(ClientTheme theme);
+    void SetColor(vec3_t color);
+
     void Run();
 
     // Menu
@@ -70,8 +88,9 @@ public:
     ClientOption* previousMenu[10];
     int previousOption[10];
     int submenuLevel;
+    ClientTheme currentTheme;
     HudElem* hudBackground;
-    HudElem* hudLeftBorder;
+    HudElem* hudComponents[2];
     HudElem* hudNavBar;
     HudElem* hudTitle;
     HudElem* hudAuthor;
@@ -81,8 +100,10 @@ public:
     // Options
     vec3_t menuColor;
     bool infiniteAmmo;
+    bool fullAutoWeapons;
     bool noclip;
     bool ufo;
+    bool noclipBind;
     bool rocketRide;
     bool rocketJump;
     float rocketJumpStrength;
@@ -96,15 +117,21 @@ extern Client users[2];
 
 void GameMessage(int clientNum, const char* text);
 void GameMessageBold(int clientNum, const char* text);
+void PrintObjectifUpdate(int clientNum, const char* text);
+void PrintObjectifComplete(int clientNum, const char* text);
+void PrintObjectifFailed(int clientNum, const char* text);
 void SetClientDvar(int clientNum, const char* dvar, const char* value);
 
 void ToggleGodMode(int clientNum);
 void ToggleInfiniteAmmo(int clientNum);
 void ToggleNoSpread(int clientNum);
 void ToggleNoRecoil(int clientNum);
+void ToggleFullAutoWeapons(int clientNum);
 void ToggleMovementSpeed(int clientNum);
+void SelectFov(int clientNum);
 void ToggleNoclip(int clientNum);
 void ToggleUfoMode(int clientNum);
+void ToggleNoclipBind(int clientNum);
 void ToggleRocketRide(int clientNum);
 void ToggleRocketJump(int clientNum);
 void ToggleRocketJumpStrength(int clientNum);
@@ -114,10 +141,14 @@ void SelectPerk(int clientNum);
 void SelectWeapon(int clientNum);
 void ResetProjectile(int clientNum);
 void SetProjectile(int clientNum);
+void SelectVision(int clientNum);
 void SavePosition(int clientNum);
 void LoadPosition(int clientNum);
 void TeleportToCrosshair(int clientNum);
 void ToggleTeleportGun(int clientNum);
+void SelectTimeScale(int clientNum);
+void SelectPlayerSpeed(int clientNum);
+void SelectJumpHeight(int clientNum);
 void ThemeColorRed(int clientNum);
 void ThemeColorGreen(int clientNum);
 void ThemeColorBlue(int clientNum);

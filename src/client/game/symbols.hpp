@@ -17,6 +17,10 @@ namespace
     static symbol<unsigned int(const char* str, int user)> SL_GetString{ 0x229078 };
     static symbol<const char* (unsigned int stringValue)> SL_ConvertToString{ 0x228630 };
     static symbol<void(const float* angles, float* forward, float* right, float* up)> AngleVectors{ 0x2723E8 };
+    static symbol<dvar_t* (const char* name)> Dvar_FindVar{ 0x279380 };
+    static symbol<void(const char* name, const char* value)> Dvar_SetFromStringByName{ 0x27D48C };
+    static symbol<int(int min, int max)> G_irand{ 0x18BE98 };
+    static symbol<float(float min, float max)> G_flrand{ 0x18BE38 };
 
     // assets
     static symbol<void(XAssetHeader* header, int type, const char* name, int allowCreateDefault)> DB_FindXAssetHeader{ 0xBB26C };
@@ -50,12 +54,14 @@ namespace
     static symbol<bool(playerState_s* ps, const Weapon weapon)> BG_TakePlayerWeapon{ 0x2BE018 };
     static symbol<void(const Weapon weapon, bool isAlternate, char* output, unsigned int maxStringLen)> BG_GetWeaponNameComplete{ 0x2BBD64 };
     static symbol<bool(const Weapon weapon)> BG_HasUnderbarrelAmmo{ 0x2BCD38 };
+    static symbol<weapFireType_t(const Weapon weapon, bool isAlternate)> BG_GetWeaponFireType { 0x2C1E48 };
     static symbol<int(const char* perkName)> BG_GetPerkCodeIndexForName{ 0x2A35E8 };
 
     // renderer
     static symbol<void(float* color, unsigned char* bytes)> R_ConvertColorToBytes{ 0x374978 };
 
     // client
+    static symbol<void(int localClientNum, const char* cmd)> Cbuf_AddText{ 0x201488 };
     static symbol<bool(int localClientNum)> CL_IsLocalClientInGame{ 0x81658 };
 
     /***************************************************************

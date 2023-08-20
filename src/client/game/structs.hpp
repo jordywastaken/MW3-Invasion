@@ -3818,3 +3818,48 @@ struct pml_t
     float previous_velocity[3]; 
     unsigned int holdrand; 
 };
+
+union DvarValue
+{ 
+    bool enabled; 
+    int integer; 
+    unsigned int unsignedInt; 
+    float value; 
+    float vector[4]; 
+    const char* string; 
+    unsigned char color[4]; 
+};
+
+union DvarLimits
+{ 
+    struct
+    {
+        int stringCount;
+        const char** strings;
+    } enumeration;
+    struct
+    {
+        int min, max;
+    } integer;
+    struct
+    {
+        float min, max;
+    } value;
+    struct
+    {
+        float min, max;
+    } vector;
+};
+
+struct dvar_t
+{ 
+    const char* name; 
+    unsigned short flags; 
+    unsigned char type; 
+    bool modified; 
+    DvarValue current; 
+    DvarValue latched; 
+    DvarValue reset; 
+    DvarLimits domain; 
+    dvar_t* hashNext; 
+};

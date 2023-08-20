@@ -6,7 +6,14 @@
 
 Client users[2];
 
-// Menu design values
+///
+/// float scaleVirtualToReal[2]{ 1.5, 2.25 };
+/// float scaleVirtualToFull[2]{ 2.0, 2.25 };
+/// float scaleRealToVirtual[2]{ 0.6666666666, 0.4444444444 };
+/// 
+
+// Menu constant values
+// TODO(Jordy): Remove those filthy constants.
 static constexpr int ClientMenuWidth = 250;
 static constexpr int ClientMenuHeight = 480;
 static constexpr int ClientMenuBorderWidth = 2;
@@ -57,6 +64,11 @@ void ClientOption::AddChild(ClientOption* child)
     }
 }
 
+void ClientOption::AddChild(const char* text, void(*callback)(int))
+{
+    AddChild(MakeOption(text, callback));
+}
+
 size_t ClientOption::GetChildCount()
 {
     size_t count = 0;
@@ -75,30 +87,61 @@ void Client::CreateMenu()
 {
     auto* mainMenu = MakeSubmenu("Main menu");
 
+    /// 
+    /// Main mods menu
+    /// 
     auto* mainModsMenu = MakeSubmenu("Main mods menu");
-    mainModsMenu->AddChild(MakeOption("God mode", ToggleGodMode));
-    mainModsMenu->AddChild(MakeOption("Infinite ammo", ToggleInfiniteAmmo));
-    mainModsMenu->AddChild(MakeOption("No spread", ToggleNoSpread));
-    mainModsMenu->AddChild(MakeOption("No recoil", ToggleNoRecoil));
-    mainModsMenu->AddChild(MakeOption("Movement speed x2", ToggleMovementSpeed));
-    mainModsMenu->AddChild(MakeOption("Noclip", ToggleNoclip));
-    mainModsMenu->AddChild(MakeOption("UFO mode", ToggleUfoMode));
+    mainModsMenu->AddChild("God mode", ToggleGodMode);
+    mainModsMenu->AddChild("Infinite ammo", ToggleInfiniteAmmo);
+    mainModsMenu->AddChild("No spread", ToggleNoSpread);
+    mainModsMenu->AddChild("No recoil", ToggleNoRecoil);
+    mainModsMenu->AddChild("Full auto weapons", ToggleFullAutoWeapons);
+    mainModsMenu->AddChild("Movement speed x2", ToggleMovementSpeed);
+
+    // For now only the host can edit client side dvars
+    if (clientNum == 0)
+    {
+        auto* fovMenu = MakeSubmenu("Fov menu");
+        fovMenu->AddChild("65 (Default)", SelectFov);
+        fovMenu->AddChild("80", SelectFov);
+        fovMenu->AddChild("90", SelectFov);
+        fovMenu->AddChild("100", SelectFov);
+        fovMenu->AddChild("110", SelectFov);
+        fovMenu->AddChild("120", SelectFov);
+        mainModsMenu->AddChild(fovMenu);
+    }
+
+    auto* movementTypeMenu = MakeSubmenu("Movement type menu");
+    movementTypeMenu->AddChild("Noclip", ToggleNoclip);
+    movementTypeMenu->AddChild("UFO mode", ToggleUfoMode);
+    movementTypeMenu->AddChild("Bind noclip to \x12", ToggleNoclipBind);
+    mainModsMenu->AddChild(movementTypeMenu);
+
     mainMenu->AddChild(mainModsMenu);
 
+    /// 
+    /// Fun menu
+    /// 
     auto* funMenu = MakeSubmenu("Fun menu");
-    funMenu->AddChild(MakeOption("Rocket ride", ToggleRocketRide));
-    funMenu->AddChild(MakeOption("Rocket jump", ToggleRocketJump));
-    funMenu->AddChild(MakeOption("Rocket jump strength", ToggleRocketJumpStrength));
+    funMenu->AddChild("Rocket ride", ToggleRocketRide);
+    funMenu->AddChild("Rocket jump", ToggleRocketJump);
+    funMenu->AddChild("Rocket jump strength", ToggleRocketJumpStrength);
     mainMenu->AddChild(funMenu);
 
+    /// 
+    /// Perks menu
+    /// 
     auto* perksMenu = MakeSubmenu("Perks menu");
-    perksMenu->AddChild(MakeOption("Set all perks", SetAllPerks));
-    perksMenu->AddChild(MakeOption("Clear all perks", ClearAllPerks));
+    perksMenu->AddChild("Set all perks", SetAllPerks);
+    perksMenu->AddChild("Clear all perks", ClearAllPerks);
     mainMenu->AddChild(perksMenu);
 
     for (int i = 0; i < 21; i++)
-        perksMenu->AddChild(MakeOption(bg_perkNames[i], SelectPerk));
+        perksMenu->AddChild(bg_perkNames[i], SelectPerk);
 
+    /// 
+    /// Weapon menu & Projectile menu
+    /// 
     auto* weaponMenu = MakeSubmenu("Weapon menu");
     weaponMenu->AddChild(MakeSubmenu("Rifle menu"));
     weaponMenu->AddChild(MakeSubmenu("Submachine gun menu"));
@@ -110,7 +153,7 @@ void Client::CreateMenu()
     mainMenu->AddChild(weaponMenu);
 
     auto* projectileMenu = MakeSubmenu("Projectile menu");
-    projectileMenu->AddChild(MakeOption("None", ResetProjectile));
+    projectileMenu->AddChild("None", ResetProjectile);
     mainMenu->AddChild(projectileMenu);
 
     for (int i = 0; i < 240; i++)
@@ -134,30 +177,95 @@ void Client::CreateMenu()
 
         if (childIndex != -1)
         {
-            weaponMenu->children[childIndex]->AddChild(MakeOption(bg_weaponCompleteDefs[i]->szInternalName, SelectWeapon));
+            weaponMenu->children[childIndex]->AddChild(bg_weaponCompleteDefs[i]->szInternalName, SelectWeapon);
         }
 
         if (bg_weaponCompleteDefs[i]->weapDef->weapType == WEAPTYPE_PROJECTILE)
         {
-            projectileMenu->AddChild(MakeOption(bg_weaponCompleteDefs[i]->szInternalName, SetProjectile));
+            projectileMenu->AddChild(bg_weaponCompleteDefs[i]->szInternalName, SetProjectile);
         }
     }
 
+    ///
+    /// Vision menu
+    /// 
+    auto* visionMenu = MakeSubmenu("Vision menu");
+    visionMenu->AddChild("default", SelectVision);
+    visionMenu->AddChild("default_night", SelectVision);
+    visionMenu->AddChild("ac130", SelectVision);
+    visionMenu->AddChild("ac130_inverted", SelectVision);
+    visionMenu->AddChild("cheat_bw", SelectVision);
+    visionMenu->AddChild("cheat_bw_contrast", SelectVision);
+    visionMenu->AddChild("cheat_bw_invert", SelectVision);
+    visionMenu->AddChild("cheat_bw_invert_contrast", SelectVision);
+    visionMenu->AddChild("cheat_chaplinnight", SelectVision);
+    visionMenu->AddChild("cheat_contrast", SelectVision);
+    visionMenu->AddChild("cheat_invert", SelectVision);
+    visionMenu->AddChild("cheat_invert_contrast", SelectVision);
+    visionMenu->AddChild("end_game", SelectVision);
+    visionMenu->AddChild("icbm", SelectVision);
+    visionMenu->AddChild("invasion", SelectVision);
+    visionMenu->AddChild("mpnuke", SelectVision);
+    visionMenu->AddChild("mpnuke_aftermath", SelectVision);
+    visionMenu->AddChild("near_death", SelectVision);
+    visionMenu->AddChild("sepia", SelectVision);
+    mainMenu->AddChild(visionMenu);
+
+    /// 
+    /// Teleport menu
+    /// 
     auto* teleportMenu = MakeSubmenu("Teleport menu");
-    teleportMenu->AddChild(MakeOption("Save position", SavePosition));
-    teleportMenu->AddChild(MakeOption("Load position", LoadPosition));
-    teleportMenu->AddChild(MakeOption("Teleport to crosshair", TeleportToCrosshair));
-    teleportMenu->AddChild(MakeOption("Teleport gun", ToggleTeleportGun));
+    teleportMenu->AddChild("Save position", SavePosition);
+    teleportMenu->AddChild("Load position", LoadPosition);
+    teleportMenu->AddChild("Teleport to crosshair", TeleportToCrosshair);
+    teleportMenu->AddChild("Teleport gun", ToggleTeleportGun);
     mainMenu->AddChild(teleportMenu);
 
-    //auto* lobbyMenu = MakeSubmenu("Lobby menu");
-    //mainMenu->AddChild(lobbyMenu);
+    /// 
+    /// Lobby menu
+    /// 
+    auto* lobbyMenu = MakeSubmenu("Lobby menu");
+    auto* timeScaleMenu = MakeSubmenu("Time scale menu");
+    timeScaleMenu->AddChild("x0.1", SelectTimeScale);
+    timeScaleMenu->AddChild("x0.25", SelectTimeScale);
+    timeScaleMenu->AddChild("x0.5", SelectTimeScale);
+    timeScaleMenu->AddChild("x0.75", SelectTimeScale);
+    timeScaleMenu->AddChild("x1", SelectTimeScale);
+    timeScaleMenu->AddChild("x2", SelectTimeScale);
+    lobbyMenu->AddChild(timeScaleMenu);
 
+    auto* playerSpeedMenu = MakeSubmenu("Player speed menu");
+    playerSpeedMenu->AddChild("190 (Default)", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("250", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("400", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("500", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("600", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("700", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("800", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("900", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("1000", SelectPlayerSpeed);
+    lobbyMenu->AddChild(playerSpeedMenu);
+
+    auto* jumpHeightMenu = MakeSubmenu("Jump height menu");
+    jumpHeightMenu->AddChild("39 (Default)", SelectJumpHeight);
+    jumpHeightMenu->AddChild("50", SelectJumpHeight);
+    jumpHeightMenu->AddChild("100", SelectJumpHeight);
+    jumpHeightMenu->AddChild("150", SelectJumpHeight);
+    jumpHeightMenu->AddChild("250", SelectJumpHeight);
+    jumpHeightMenu->AddChild("500", SelectJumpHeight);
+    jumpHeightMenu->AddChild("1000", SelectJumpHeight);
+    lobbyMenu->AddChild(jumpHeightMenu);
+
+    mainMenu->AddChild(lobbyMenu);
+
+    /// 
+    /// Settings menu
+    /// 
     auto* settingsMenu = MakeSubmenu("Settings menu");
-    settingsMenu->AddChild(MakeOption("Theme color red", ThemeColorRed));
-    settingsMenu->AddChild(MakeOption("Theme color green", ThemeColorGreen));
-    settingsMenu->AddChild(MakeOption("Theme color blue", ThemeColorBlue));
-    settingsMenu->AddChild(MakeOption("Theme color yellow", ThemeColorYellow));
+    settingsMenu->AddChild("Theme color red", ThemeColorRed);
+    settingsMenu->AddChild("Theme color green", ThemeColorGreen);
+    settingsMenu->AddChild("Theme color blue", ThemeColorBlue);
+    settingsMenu->AddChild("Theme color yellow", ThemeColorYellow);
     mainMenu->AddChild(settingsMenu);
 
     rootMenu = mainMenu;
@@ -175,34 +283,41 @@ void Client::DestroyMenu()
 
 void Client::CreateHudElems()
 {
-    // Panels
-    hudBackground = CreateMaterialHudElem(clientNum, "white", ClientMenuWidth, ClientMenuHeight, ClientMenuX, 0.0, 0.0, { 0.0, 0.0, 0.0 }, 0.0);
-    hudBackground->SetHorzAlign(HE_HORZALIGN_RIGHT);
-
-    hudLeftBorder = CreateMaterialHudElem(clientNum, "white", ClientMenuBorderWidth, ClientMenuHeight, ClientMenuX - ClientMenuBorderWidth, 0.0, 1.0, menuColor, 0.0);
-    hudLeftBorder->SetHorzAlign(HE_HORZALIGN_RIGHT);
-
-    hudNavBar = CreateMaterialHudElem(clientNum, "white", ClientMenuWidth, ClientMenuNavBarHeight, ClientMenuX, ClientMenuOptionY - 1.0, 1.0, menuColor, 0.0);
-    hudNavBar->SetHorzAlign(HE_HORZALIGN_RIGHT);
-
-    // Labels
-    hudTitle = CreateTextHudElem(clientNum, "Invasion", 2.0, ClientMenuX + ClientMenuWidth / 2, ClientMenuTitleY, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
-    hudTitle->SetHorzAlign(HE_HORZALIGN_RIGHT);
-    hudTitle->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
-    hudTitle->SetTextGlow(menuColor);
-    hudTitle->SetTextFont(HE_FONT_OBJECTIVE);
-
-    hudAuthor = CreateTextHudElem(clientNum, "by Jordy", 1.0, ClientMenuX + ClientMenuWidth / 2, ClientMenuAuthorY, 1.0, menuColor, 0.0);
-    hudAuthor->SetHorzAlign(HE_HORZALIGN_RIGHT);
-    hudAuthor->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
-
-    hudCurrentMenu = CreateTextHudElem(clientNum, "Main menu", 1.6, ClientMenuOptionX, ClientMenuCurrentMenuY, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
-    hudCurrentMenu->SetHorzAlign(HE_HORZALIGN_RIGHT);
-
-    for (int i = 0; i < ClientMaxOptions; i++)
+    switch (currentTheme)
     {
-        hudOptions[i] = CreateTextHudElem(clientNum, currentMenu->children[i] ? currentMenu->children[i]->text : "", 1.0, ClientMenuOptionX, ClientMenuOptionY + (ClientMenuNavBarHeight * i), 2.0, { 1.0, 1.0, 1.0 }, 0.0);
-        hudOptions[i]->SetHorzAlign(HE_HORZALIGN_RIGHT);
+    case(CLIENT_THEME_MATRIX):
+    {
+        // Panels
+        hudBackground = CreateMaterialHudElem(clientNum, "white", ClientMenuWidth, ClientMenuHeight, ClientMenuX, 0.0, 0.0, { 0.0, 0.0, 0.0 }, 0.0);
+        hudBackground->SetHorzAlign(HE_HORZALIGN_RIGHT);
+
+        hudComponents[0] = CreateMaterialHudElem(clientNum, "white", ClientMenuBorderWidth, ClientMenuHeight, ClientMenuX - ClientMenuBorderWidth, 0.0, 1.0, menuColor, 0.0);
+        hudComponents[0]->SetHorzAlign(HE_HORZALIGN_RIGHT);
+
+        hudNavBar = CreateMaterialHudElem(clientNum, "white", ClientMenuWidth, ClientMenuNavBarHeight, ClientMenuX, ClientMenuOptionY - 1.0, 1.0, menuColor, 0.0);
+        hudNavBar->SetHorzAlign(HE_HORZALIGN_RIGHT);
+
+        // Labels
+        hudTitle = CreateTextHudElem(clientNum, "Invasion", 2.0, ClientMenuX + ClientMenuWidth / 2, ClientMenuTitleY, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudTitle->SetHorzAlign(HE_HORZALIGN_RIGHT);
+        hudTitle->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudTitle->SetTextFont(HE_FONT_OBJECTIVE);
+        hudTitle->SetTextGlow(menuColor);
+
+        hudAuthor = CreateTextHudElem(clientNum, "by Jordy", 1.0, ClientMenuX + ClientMenuWidth / 2, ClientMenuAuthorY, 1.0, menuColor, 0.0);
+        hudAuthor->SetHorzAlign(HE_HORZALIGN_RIGHT);
+        hudAuthor->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+
+        hudCurrentMenu = CreateTextHudElem(clientNum, "Main menu", 1.6, ClientMenuOptionX, ClientMenuCurrentMenuY, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudCurrentMenu->SetHorzAlign(HE_HORZALIGN_RIGHT);
+
+        for (int i = 0; i < ClientMaxOptions; i++)
+        {
+            hudOptions[i] = CreateTextHudElem(clientNum, currentMenu->children[i] ? currentMenu->children[i]->text : "", 1.0, ClientMenuOptionX, ClientMenuOptionY + (ClientMenuNavBarHeight * i), 2.0, { 1.0, 1.0, 1.0 }, 0.0);
+            hudOptions[i]->SetHorzAlign(HE_HORZALIGN_RIGHT);
+        }
+        break;
+    }
     }
 }
 
@@ -212,13 +327,14 @@ void Client::DestroyHudElems()
         return;
 
     delete hudBackground;
-    delete hudLeftBorder;
+    delete hudComponents[0];
+    delete hudComponents[1];
     delete hudNavBar;
     delete hudTitle;
     delete hudAuthor;
     delete hudCurrentMenu;
 
-    for(int i = 0; i < 20; i++)
+    for(int i = 0; i < ClientMaxOptions; i++)
         delete hudOptions[i];
 }
 
@@ -240,7 +356,8 @@ void Client::SetDefaults()
     submenuLevel = 0;
 
     hudBackground = 0;
-    hudLeftBorder = 0;
+    hudComponents[0] = 0;
+    hudComponents[1] = 0;
     hudNavBar = 0;
     hudTitle = 0;
     hudAuthor = 0;
@@ -252,8 +369,10 @@ void Client::SetDefaults()
     // Options
     menuColor = { 0.008, 0.5, 0.2 };
     infiniteAmmo = false;
+    fullAutoWeapons = false;
     noclip = false;
     ufo = false;
+    noclipBind = false;
     rocketRide = false;
     rocketJump = false;
     rocketJumpStrength = 256.0;
@@ -274,25 +393,13 @@ void Client::ClearAll()
 
 void Client::HandleInput()
 {
-    level.clients[clientNum].ps.weapCommon.weapFlags &= ~(1 << 11); // Enable action slots
-    level.clients[clientNum].ps.pm_flags &= ~(1 << 18); // Enable jump
-    level.clients[clientNum].ps.pm_flags &= ~(1 << 24); // Enable crouch
-    level.clients[clientNum].ps.pm_flags &= ~(1 << 25); // Enable prone
-    level.clients[clientNum].ps.otherFlags &= ~(1 << 14); // Enable hud
+    // Handle bind first down
+    if (noclipBind && (buttonBits & CLIENT_BTN_L2) && !noclip)
+        ToggleNoclip(clientNum);
 
-    if (opened || !InputReady())
-    {
-        level.clients[clientNum].ps.weapCommon.weapFlags |= (1 << 11); // Disable action slots
-        level.clients[clientNum].ps.pm_flags |= (1 << 18); // Disable jump
-        level.clients[clientNum].ps.pm_flags |= (1 << 24); // Disable crouch
-        level.clients[clientNum].ps.pm_flags |= (1 << 25); // Disable prone
-        level.clients[clientNum].ps.otherFlags |= (1 << 14); // Disable hud
-    }
-
-    level.clients[clientNum].ps.weapCommon.weapFlags &= ~(1 << 7); // Enable weapon
-
-    if(noclip || ufo)
-        level.clients[clientNum].ps.weapCommon.weapFlags |= (1 << 7); // Disable weapon
+    // Handle bind released
+    if (noclipBind && !(buttonBits & CLIENT_BTN_L2) && noclip)
+        ToggleNoclip(clientNum);
 
     if (InputReady())
     {
@@ -341,18 +448,25 @@ void Client::ChangeSubmenu(ClientOption* submenu)
     currentOption = 0;
     currentMenu = submenu;
 
-    hudCurrentMenu->SetText(submenu->text);
-    hudCurrentMenu->SetAlpha(0.0);
-    hudCurrentMenu->SetAlpha(1.0, ClientMenuFadeInDuration);
-
-    hudNavBar->SetAlpha(0.0);
-    hudNavBar->SetAlpha(0.5, ClientMenuFadeInDuration);
-
-    for (int i = 0; i < ClientMaxOptions; i++)
+    switch (currentTheme)
     {
-        hudOptions[i]->SetText(submenu->children[i] ? submenu->children[i]->text : "");
-        hudOptions[i]->SetAlpha(0.0);
-        hudOptions[i]->SetAlpha(1.0, ClientMenuFadeInDuration);
+    case(CLIENT_THEME_MATRIX):
+    {
+        hudCurrentMenu->SetText(submenu->text);
+        hudCurrentMenu->SetAlpha(0.0);
+        hudCurrentMenu->SetAlpha(1.0, ClientMenuFadeInDuration);
+
+        hudNavBar->SetAlpha(0.0);
+        hudNavBar->SetAlpha(0.5, ClientMenuFadeInDuration);
+
+        for (int i = 0; i < ClientMaxOptions; i++)
+        {
+            hudOptions[i]->SetText(submenu->children[i] ? submenu->children[i]->text : "");
+            hudOptions[i]->SetAlpha(0.0);
+            hudOptions[i]->SetAlpha(1.0, ClientMenuFadeInDuration);
+        }
+        break;
+    }
     }
 }
 
@@ -366,59 +480,79 @@ void Client::OnOpen()
 
     opened = true;
 
-    // Slide in
-    hudBackground->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-    hudLeftBorder->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-    hudTitle->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-    hudAuthor->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+    level.clients[clientNum].ps.weapCommon.weapFlags |= (1 << 11); // Disable action slots
+    level.clients[clientNum].ps.otherFlags |= (1 << 14); // Disable hud
 
-    hudNavBar->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-    hudCurrentMenu->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-    for(auto option : hudOptions) 
-        option->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+    switch (currentTheme)
+    {
+    case(CLIENT_THEME_MATRIX):
+    {
+        // Slide in
+        hudBackground->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+        hudComponents[0]->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+        hudTitle->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+        hudAuthor->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
 
-    // Fade in
-    hudBackground->SetAlpha(0.6, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
-    hudLeftBorder->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
-    hudTitle->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
-    hudAuthor->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
-    
-    // Start fading after the slide in animation
-    hudNavBar->SetAlpha(0.6, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
-    hudCurrentMenu->SetAlpha(1.0, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
-    for (auto option : hudOptions)
-        option->SetAlpha(1.0, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
+        hudNavBar->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+        hudCurrentMenu->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+        for (auto option : hudOptions)
+            option->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
 
-    InputSleep(ClientMenuSlideInDuration + ClientMenuFadeInDuration);
+        // Fade in
+        hudBackground->SetAlpha(0.6, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
+        hudComponents[0]->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
+        hudTitle->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
+        hudAuthor->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
+
+        // Start fading after the slide in animation
+        hudNavBar->SetAlpha(0.6, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
+        hudCurrentMenu->SetAlpha(1.0, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
+        for (auto option : hudOptions)
+            option->SetAlpha(1.0, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
+
+        InputSleep(ClientMenuSlideInDuration + ClientMenuFadeInDuration);
+        break;
+    }
+    }
 }
 
 void Client::OnClose()
 {
     opened = false;
 
-    // Fade out
-    hudBackground->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
-    hudLeftBorder->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
-    hudTitle->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
-    hudAuthor->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
+    level.clients[clientNum].ps.weapCommon.weapFlags &= ~(1 << 11); // Enable action slots
+    level.clients[clientNum].ps.otherFlags &= ~(1 << 14); // Enable hud
 
-    hudNavBar->SetAlpha(0.0, ClientMenuFadeOutDuration);
-    hudCurrentMenu->SetAlpha(0.0, ClientMenuFadeOutDuration);
-    for (auto option : hudOptions)
-        option->SetAlpha(0.0, ClientMenuFadeOutDuration);
+    switch (currentTheme)
+    {
+    case(CLIENT_THEME_MATRIX):
+    {
+        // Fade out
+        hudBackground->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
+        hudComponents[0]->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
+        hudTitle->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
+        hudAuthor->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
 
-    // Slide out once the fading animation is done
-    hudBackground->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-    hudLeftBorder->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-    hudTitle->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-    hudAuthor->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        hudNavBar->SetAlpha(0.0, ClientMenuFadeOutDuration);
+        hudCurrentMenu->SetAlpha(0.0, ClientMenuFadeOutDuration);
+        for (auto option : hudOptions)
+            option->SetAlpha(0.0, ClientMenuFadeOutDuration);
 
-    hudNavBar->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-    hudCurrentMenu->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-    for (auto option : hudOptions)
-        option->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        // Slide out once the fading animation is done
+        hudBackground->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        hudComponents[0]->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        hudTitle->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        hudAuthor->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
 
-    InputSleep(ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
+        hudNavBar->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        hudCurrentMenu->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        for (auto option : hudOptions)
+            option->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+
+        InputSleep(ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
+        break;
+    }
+    }
 }
 
 void Client::OnPress()
@@ -438,8 +572,16 @@ void Client::OnPress()
         previousOption[submenuLevel] = currentOption;
         submenuLevel++;
         ChangeSubmenu(currentMenu->children[currentOption]);
-        hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption);
-        InputSleep(ClientMenuFadeInDuration);
+
+        switch (currentTheme)
+        {
+        case(CLIENT_THEME_MATRIX):
+        {
+            hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption);
+            InputSleep(ClientMenuFadeInDuration);
+            break;
+        }
+        }
     }
 }
 
@@ -454,23 +596,47 @@ void Client::OnCancel()
         submenuLevel--;
         ChangeSubmenu(previousMenu[submenuLevel]);
         currentOption = previousOption[submenuLevel];
-        hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption);
-        InputSleep(ClientMenuFadeInDuration);
+
+        switch (currentTheme)
+        {
+        case(CLIENT_THEME_MATRIX):
+        {
+            hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption);
+            InputSleep(ClientMenuFadeInDuration);
+            break;
+        }
+        }
     }
 }
 
 void Client::OnScrollUp()
 {
     currentOption = currentOption == 0 ? currentMenu->GetChildCount() - 1 : currentOption - 1;
-    hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, ClientMenuScrollDuration);
-    InputSleep(ClientMenuScrollDuration);
+
+    switch (currentTheme)
+    {
+    case(CLIENT_THEME_MATRIX):
+    {
+        hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, ClientMenuScrollDuration);
+        InputSleep(ClientMenuScrollDuration);
+        break;
+    }
+    }
 }
 
 void Client::OnScrollDown()
 {
     currentOption = currentOption == (currentMenu->GetChildCount() - 1) ? 0 : currentOption + 1;
-    hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, ClientMenuScrollDuration);
-    InputSleep(ClientMenuScrollDuration);
+
+    switch (currentTheme)
+    {
+    case(CLIENT_THEME_MATRIX):
+    {
+        hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, ClientMenuScrollDuration);
+        InputSleep(ClientMenuScrollDuration);
+        break;
+    }
+    }
 }
 
 void Client::Run()
@@ -568,6 +734,21 @@ void GameMessage(int clientNum, const char* text)
 void GameMessageBold(int clientNum, const char* text)
 {
     SV_GameSendServerCommand(clientNum, va("gmb \"%s\"", text));
+}
+
+void PrintObjectifUpdate(int clientNum, const char* text)
+{
+    SV_GameSendServerCommand(clientNum, va("obj_update \"%s\"", text));
+}
+
+void PrintObjectifComplete(int clientNum, const char* text)
+{
+    SV_GameSendServerCommand(clientNum, va("obj_complete \"%s\"", text));
+}
+
+void PrintObjectifFailed(int clientNum, const char* text)
+{
+    SV_GameSendServerCommand(clientNum, va("obj_failed \"%s\"", text));
 }
 
 void SetClientDvar(int clientNum, const char* dvar, const char* value)
@@ -711,6 +892,16 @@ void SwitchToWeapon(int clientNum, const Weapon weapon, bool immediate)
     G_SelectWeapon(clientNum, weapon);
 }
 
+void ResetDvar(const char* name)
+{
+    dvar_t* dvar = Dvar_FindVar(name);
+
+    if (dvar)
+    {
+        dvar->current = dvar->reset;
+    }
+}
+
 void ToggleGodMode(int clientNum)
 {
     const int bit = (1 << 0);
@@ -750,6 +941,13 @@ void ToggleNoRecoil(int clientNum)
     GameMessage(clientNum, va("No recoil: %s", (value & bit) == bit ? "^2On" : "^1Off"));
 }
 
+void ToggleFullAutoWeapons(int clientNum)
+{
+    users[clientNum].fullAutoWeapons ^= 1;
+
+    GameMessage(clientNum, va("Full auto weapons: %s", users[clientNum].fullAutoWeapons ? "^2On" : "^1Off"));
+}
+
 void ToggleMovementSpeed(int clientNum)
 {
     float& speedScale = level.clients[clientNum].pers.moveSpeedScaleMultiplier;
@@ -759,12 +957,36 @@ void ToggleMovementSpeed(int clientNum)
     GameMessage(clientNum, va("Movement speed x2: %s", (speedScale == 2.0) ? "^2On" : "^1Off"));
 }
 
+void SelectFov(int clientNum)
+{
+    auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
+    const char* fovValue = currentOption->text;
+
+    if (users[clientNum].currentOption == 0)
+    {
+        ResetDvar("cg_fov");
+    }
+    else
+    {
+        Dvar_SetFromStringByName("cg_fov", fovValue);
+    }
+
+    GameMessage(clientNum, va("Fov set to: ^2%s", fovValue));
+}
+
 void ToggleNoclip(int clientNum)
 {
     users[clientNum].noclip ^= 1;
 
+    level.clients[clientNum].ps.weapCommon.weapFlags &= ~(1 << 7);
+
     if (users[clientNum].noclip)
+    {
         users[clientNum].ufo = false;
+
+        if (!users[clientNum].noclipBind)
+            level.clients[clientNum].ps.weapCommon.weapFlags |= (1 << 7);
+    }
 
     GameMessage(clientNum, va("Noclip: %s", users[clientNum].noclip ? "^2On" : "^1Off"));
 }
@@ -773,10 +995,22 @@ void ToggleUfoMode(int clientNum)
 {
     users[clientNum].ufo ^= 1;
 
+    level.clients[clientNum].ps.weapCommon.weapFlags &= ~(1 << 7);
+
     if (users[clientNum].ufo)
+    {
         users[clientNum].noclip = false;
+        level.clients[clientNum].ps.weapCommon.weapFlags |= (1 << 7);
+    }
 
     GameMessage(clientNum, va("UFO mode: %s", users[clientNum].ufo ? "^2On" : "^1Off"));
+}
+
+void ToggleNoclipBind(int clientNum)
+{
+    users[clientNum].noclipBind ^= 1;
+
+    GameMessage(clientNum, va("Noclip: %s", users[clientNum].noclipBind ? "^2bound to \x12" : "^1unbound"));
 }
 
 void ToggleRocketRide(int clientNum)
@@ -876,6 +1110,15 @@ void SetProjectile(int clientNum)
     GameMessage(clientNum, va("Projectile set to: ^2%s", projectileName));
 }
 
+void SelectVision(int clientNum)
+{
+    auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
+    const char* visionName = currentOption->text;
+
+    SV_GameSendServerCommand(clientNum, va("visionset_naked \"%s\" 200", visionName));
+    GameMessage(clientNum, va("Vision set: ^2%s", visionName));
+}
+
 void SavePosition(int clientNum)
 {
     users[clientNum].savedPosition[0] = level.clients[clientNum].ps.origin[0];
@@ -908,10 +1151,53 @@ void ToggleTeleportGun(int clientNum)
     GameMessage(clientNum, va("Teleport gun: %s", users[clientNum].teleportGun ? "^2On" : "^1Off"));
 }
 
+void SelectTimeScale(int clientNum)
+{
+    auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
+    const char* timeScale = currentOption->text;
+
+    Dvar_SetFromStringByName("com_timescale", timeScale + 1); // Skip the 'x'
+    GameMessage(clientNum, va("Time scale set to: ^2%s", timeScale));
+}
+
+void SelectPlayerSpeed(int clientNum)
+{
+    auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
+    const char* playerSpeedValue = currentOption->text;
+
+    if (users[clientNum].currentOption == 0)
+    {
+        ResetDvar("g_speed");
+    }
+    else
+    {
+        Dvar_SetFromStringByName("g_speed", playerSpeedValue);
+    }
+
+    GameMessage(clientNum, va("Player speed set to: ^2%s", playerSpeedValue));
+}
+
+void SelectJumpHeight(int clientNum)
+{
+    auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
+    const char* jumpHeightValue = currentOption->text;
+
+    if (users[clientNum].currentOption == 0)
+    {
+        ResetDvar("jump_height");
+    }
+    else
+    {
+        Dvar_SetFromStringByName("jump_height", jumpHeightValue);
+    }
+
+    GameMessage(clientNum, va("Jump height set to: ^2%s", jumpHeightValue));
+}
+
 void ThemeColorRed(int clientNum)
 {
     vec3_t color{ 0.9, 0.1, 0.01 };
-    users[clientNum].hudLeftBorder->SetRGB(color, 200);
+    users[clientNum].hudComponents[0]->SetRGB(color, 200);
     users[clientNum].hudNavBar->SetRGB(color, 200);
     users[clientNum].hudAuthor->SetRGB(color, 200);
     users[clientNum].hudTitle->SetTextGlow(color);
@@ -922,7 +1208,7 @@ void ThemeColorRed(int clientNum)
 void ThemeColorGreen(int clientNum)
 {
     vec3_t color{ 0.008, 0.5, 0.2 };
-    users[clientNum].hudLeftBorder->SetRGB(color, 200);
+    users[clientNum].hudComponents[0]->SetRGB(color, 200);
     users[clientNum].hudNavBar->SetRGB(color, 200);
     users[clientNum].hudAuthor->SetRGB(color, 200);
     users[clientNum].hudTitle->SetTextGlow(color);
@@ -933,7 +1219,7 @@ void ThemeColorGreen(int clientNum)
 void ThemeColorBlue(int clientNum)
 {
     vec3_t color{ 0.0, 0.0, 1.0 };
-    users[clientNum].hudLeftBorder->SetRGB(color, 200);
+    users[clientNum].hudComponents[0]->SetRGB(color, 200);
     users[clientNum].hudNavBar->SetRGB(color, 200);
     users[clientNum].hudAuthor->SetRGB(color, 200);
     users[clientNum].hudTitle->SetTextGlow(color);
@@ -944,7 +1230,7 @@ void ThemeColorBlue(int clientNum)
 void ThemeColorYellow(int clientNum)
 {
     vec3_t color{ 1.0, 1.0, 0.0 };
-    users[clientNum].hudLeftBorder->SetRGB(color, 200);
+    users[clientNum].hudComponents[0]->SetRGB(color, 200);
     users[clientNum].hudNavBar->SetRGB(color, 200);
     users[clientNum].hudAuthor->SetRGB(color, 200);
     users[clientNum].hudTitle->SetTextGlow(color);
@@ -977,39 +1263,46 @@ void ClientCommand_Hook(int clientNum, const char* s)
     if (_sys_strncmp(s, "n ", 2) == 0)
     {
         int key = atoi(s + 2);
-        //printf("Key: %i\n", key);
+        // debug_print("Key: %i\n", key);
 
         switch (key)
         {
-            // L1
+        case(1): user.buttonBits |= CLIENT_BTN_R1; break;
+        case(2): user.buttonBits &= ~CLIENT_BTN_R1; break;
+
+        case(5): user.buttonBits |= CLIENT_BTN_R2; break;
+        case(6): user.buttonBits &= ~CLIENT_BTN_R2; break;
+
+        case(7): user.buttonBits |= CLIENT_BTN_L2; break;
+        case(8): user.buttonBits &= ~CLIENT_BTN_L2; break;
+
+        case(9): user.buttonBits |= CLIENT_BTN_L3; break;
+        case(10): user.buttonBits &= ~CLIENT_BTN_L3; break;
+
+        case(11): user.buttonBits |= CLIENT_BTN_SQUARE; break;
+        case(12): user.buttonBits &= ~CLIENT_BTN_SQUARE; break;
+
         case(13): user.buttonBits |= CLIENT_BTN_L1; break;
         case(14): user.buttonBits &= ~CLIENT_BTN_L1; break;
 
-            // Dpad up
         case(15): user.buttonBits |= CLIENT_BTN_DPAD_UP; break;
         case(16): user.buttonBits &= ~CLIENT_BTN_DPAD_UP; break;
 
-            // Dpad down
         case(17): user.buttonBits |= CLIENT_BTN_DPAD_DOWN; break;
         case(18): user.buttonBits &= ~CLIENT_BTN_DPAD_DOWN; break;
 
-            // Dpad left
         case(19): user.buttonBits |= CLIENT_BTN_DPAD_LEFT; break;
         case(20): user.buttonBits &= ~CLIENT_BTN_DPAD_LEFT; break;
 
-            // Dpad right
         case(21): user.buttonBits |= CLIENT_BTN_DPAD_RIGHT; break;
         case(22): user.buttonBits &= ~CLIENT_BTN_DPAD_RIGHT; break;
 
-            // Circle
         case(23): user.buttonBits |= CLIENT_BTN_CIRCLE; break;
         case(24): user.buttonBits &= ~CLIENT_BTN_CIRCLE; break;
 
-            // Cross
         case(25): user.buttonBits |= CLIENT_BTN_CROSS; break;
         case(26): user.buttonBits &= ~CLIENT_BTN_CROSS; break;
 
-            // R3
         case(27): user.buttonBits |= CLIENT_BTN_R3; break;
         case(28): user.buttonBits &= ~CLIENT_BTN_R3; break;
         }
@@ -1298,6 +1591,16 @@ void PM_AirMove_Hook(pmove_t* pm, pml_t* pml)
     PM_AirMove_Original(pm, pml);
 }
 
+void PM_Weapon_StartFiring_Hook(HookContext_t& ctx)
+{
+    playerState_s* ps = reinterpret_cast<playerState_s*>(static_cast<uintptr_t>(ctx.r31));
+
+    if (ctx.r3 == WEAPON_FIRETYPE_FULLAUTO || users[ps->clientNum].fullAutoWeapons)
+    {
+        ctx.lr = 0x2B7480;
+    }
+}
+
 namespace clients
 {
     void start()
@@ -1306,6 +1609,7 @@ namespace clients
         {
             users[i].ClearAll();
             users[i].clientNum = i;
+            users[i].currentTheme = CLIENT_THEME_MATRIX;
         }
 
         hook::jump(0x13EC84, *reinterpret_cast<uintptr_t*>(ClientCommand_Hook));
@@ -1316,6 +1620,8 @@ namespace clients
         hook::jump(0x2AB640, *reinterpret_cast<uintptr_t*>(PmoveSingle_Hook));
         hook::jump(0x2AAE28, *reinterpret_cast<uintptr_t*>(PM_WalkMove_Hook));
         hook::jump(0x2AA4C8, *reinterpret_cast<uintptr_t*>(PM_AirMove_Hook));
+
+        hook::inject(0x2B7438, PM_Weapon_StartFiring_Hook);
     }
 
     void stop()

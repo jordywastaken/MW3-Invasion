@@ -4,7 +4,8 @@
 
 __attribute__((naked, noinline)) void HandleRegisters()
 {
-    asm(
+    asm
+    (
         // Save r0
         "std       %r0, 0x70(%r1);"
 

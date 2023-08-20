@@ -42,7 +42,7 @@ static T clamp(T value, T min, T max)
 #include "symbols.hpp"
 
 #ifdef _DEBUG
-#define debug_print(fmt, ...) printf(fmt, __VA_ARGS__)
+#define debug_print printf
 #else
 #define debug_print(fmt, ...)
 #endif
