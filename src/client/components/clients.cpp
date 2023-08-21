@@ -9,7 +9,7 @@ Client users[2];
 ///
 /// float scaleVirtualToReal[2]{ 1.5, 2.25 };
 /// float scaleVirtualToFull[2]{ 2.0, 2.25 };
-/// float scaleRealToVirtual[2]{ 0.6666666666, 0.4444444444 };
+float scaleRealToVirtual[2]{ 0.6666666666, 0.6666666666 };
 /// 
 
 ClientOption::ClientOption(const char* text, void(*callback)(int))
@@ -242,11 +242,11 @@ void Client::CreateMenu()
     /// 
     auto* themeMenu = MakeSubmenu("Theme menu");
     themeMenu->AddChild("Set theme Matrix", SetThemeMatrix);
-    themeMenu->AddChild("Set theme Classic", SetThemeClassic);
+    //themeMenu->AddChild("Set theme Classic", SetThemeClassic);
     themeMenu->AddChild("Set theme Enstone small", SetThemeEnstoneSmall);
-    themeMenu->AddChild("Set theme Enstone Large", SetThemeEnstoneLarge);
-    themeMenu->AddChild("Set theme Enstone right", SetThemeEnstoneRight);
-    themeMenu->AddChild("Set theme Enstone small2", SetThemeEnstoneSmall2);
+    //themeMenu->AddChild("Set theme Enstone Large", SetThemeEnstoneLarge);
+    //themeMenu->AddChild("Set theme Enstone right", SetThemeEnstoneRight);
+    //themeMenu->AddChild("Set theme Enstone small2", SetThemeEnstoneSmall2);
     themeMenu->AddChild("Theme color red", ThemeColorRed);
     themeMenu->AddChild("Theme color green", ThemeColorGreen);
     themeMenu->AddChild("Theme color blue", ThemeColorBlue);
@@ -307,24 +307,39 @@ void Client::CreateHudElems()
         }
         break;
     }
+    case(CLIENT_THEME_ENSTONE_SMALL):
+    {
+        int height = 390;
+
+        // Panels
+        hudBackground = CreateMaterialHudElem(clientNum, "white", 270 * scaleRealToVirtual[0], height * scaleRealToVirtual[1], menuPos.x, menuPos.y, 0.0, { 0.0, 0.0, 0.0 }, 0.6);
+        hudBackground->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudBackground->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+        hudComponents[0] = CreateMaterialHudElem(clientNum, "white", 270 * scaleRealToVirtual[0], 75 * scaleRealToVirtual[1], menuPos.x, menuPos.y - (15.0 + 142.5) * scaleRealToVirtual[1], 1.0, menuColor, 0.6);
+        hudComponents[0]->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudComponents[0]->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+        hudComponents[1] = CreateMaterialHudElem(clientNum, "white", 270 * scaleRealToVirtual[0], 30 * scaleRealToVirtual[1], menuPos.x, menuPos.y + (37.5 + 142.5) * scaleRealToVirtual[1], 1.0, menuColor, 0.6);
+        hudComponents[1]->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudComponents[1]->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+
+        // Labels
+        break;
+    }
     }
 }
 
 void Client::DestroyHudElems()
 {
-    if (!hudBackground)
-        return;
+    delete hudBackground, hudBackground = 0;
+    delete hudComponents[0], hudComponents[0] = 0;
+    delete hudComponents[1], hudComponents[1] = 0;
+    delete hudNavBar, hudNavBar = 0;
+    delete hudTitle, hudTitle = 0;
+    delete hudAuthor, hudAuthor = 0;
+    delete hudCurrentMenu, hudCurrentMenu = 0;
 
-    delete hudBackground;
-    delete hudComponents[0];
-    delete hudComponents[1];
-    delete hudNavBar;
-    delete hudTitle;
-    delete hudAuthor;
-    delete hudCurrentMenu;
-
-    for(int i = 0; i < ClientMaxViewableOptions; i++)
-        delete hudOptions[i];
+    for(auto& option : hudOptions)
+        delete option, option = 0;
 }
 
 void Client::SetDefaults()
