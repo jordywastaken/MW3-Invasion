@@ -6,12 +6,6 @@
 
 Client users[2];
 
-///
-/// float scaleVirtualToReal[2]{ 1.5, 2.25 };
-/// float scaleVirtualToFull[2]{ 2.0, 2.25 };
-float scaleRealToVirtual[2]{ 0.6666666666, 0.6666666666 };
-/// 
-
 ClientOption::ClientOption(const char* text, void(*callback)(int))
     : text(text), callback(callback)
 {
@@ -283,7 +277,7 @@ void Client::CreateHudElems()
         hudComponents[0] = CreateMaterialHudElem(clientNum, "white", 2, 480, 65.0, 0.0, 1.0, menuColor, 0.0);
         hudComponents[0]->SetHorzAlign(HE_HORZALIGN_RIGHT);
 
-        hudNavBar = CreateMaterialHudElem(clientNum, "white", 250, 15, 67.0, 114.0, 1.0, menuColor, 0.0);
+        hudNavBar = CreateMaterialHudElem(clientNum, "white", 250, 15, 67.0, 114.0 + (15.0 * currentOption), 1.0, menuColor, 0.0);
         hudNavBar->SetHorzAlign(HE_HORZALIGN_RIGHT);
 
         // Labels
@@ -309,20 +303,43 @@ void Client::CreateHudElems()
     }
     case(CLIENT_THEME_ENSTONE_SMALL):
     {
-        int height = 390;
-
         // Panels
-        hudBackground = CreateMaterialHudElem(clientNum, "white", 270 * scaleRealToVirtual[0], height * scaleRealToVirtual[1], menuPos.x, menuPos.y, 0.0, { 0.0, 0.0, 0.0 }, 0.6);
+        hudBackground = CreateMaterialHudElem(clientNum, "white", 180, 70, menuPos.x, menuPos.y, 0.0, { 0.0, 0.0, 0.0 }, 0.0);
         hudBackground->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
         hudBackground->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
-        hudComponents[0] = CreateMaterialHudElem(clientNum, "white", 270 * scaleRealToVirtual[0], 75 * scaleRealToVirtual[1], menuPos.x, menuPos.y - (15.0 + 142.5) * scaleRealToVirtual[1], 1.0, menuColor, 0.6);
+
+        hudComponents[0] = CreateMaterialHudElem(clientNum, "white", 180, 50, menuPos.x, menuPos.y - 10.0, 1.0, menuColor, 0.0);
         hudComponents[0]->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
         hudComponents[0]->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
-        hudComponents[1] = CreateMaterialHudElem(clientNum, "white", 270 * scaleRealToVirtual[0], 30 * scaleRealToVirtual[1], menuPos.x, menuPos.y + (37.5 + 142.5) * scaleRealToVirtual[1], 1.0, menuColor, 0.6);
+
+        hudComponents[1] = CreateMaterialHudElem(clientNum, "white", 180, 20, menuPos.x, menuPos.y + 25.0, 1.0, menuColor, 0.0);
         hudComponents[1]->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
         hudComponents[1]->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
 
+        hudNavBar = CreateMaterialHudElem(clientNum, "white", 180, 15, menuPos.x, menuPos.y - 45.0 + (15.0 * currentOption), 1.0, menuColor, 0.0);
+        hudNavBar->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudNavBar->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+
         // Labels
+        hudTitle = CreateTextHudElem(clientNum, "Invasion", 2.0, menuPos.x, menuPos.y - 10.0, 2.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudTitle->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudTitle->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+
+        hudAuthor = CreateTextHudElem(clientNum, "by Jordy", 0.9, menuPos.x - 85.0, menuPos.y + 25.0, 2.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudAuthor->SetAlignOrg(HE_ALIGN_X_LEFT, HE_ALIGN_Y_MIDDLE);
+        hudAuthor->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+
+        hudCurrentMenu = CreateTextHudElem(clientNum, currentMenu->text, 1.2, menuPos.x, menuPos.y - 65.0, 2.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudCurrentMenu->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudCurrentMenu->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+
+        for (int i = 0; i < ClientMaxViewableOptions; i++)
+        {
+            hudOptions[i] = CreateTextHudElem(clientNum, currentMenu->children[i] ? currentMenu->children[i]->text : "", 1.0, menuPos.x, menuPos.y - 45.0 + (15.0 * i), 2.0, { 1.0, 1.0, 1.0 }, 0.0);
+            hudOptions[i]->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+            hudOptions[i]->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+        }
+
         break;
     }
     }
@@ -464,14 +481,24 @@ void Client::ChangeSubmenu(ClientOption* submenu)
 
         hudNavBar->SetAlpha(0.0);
         hudNavBar->SetAlpha(0.5, 400);
+        hudNavBar->SetY(114.0 + (currentOption - currentOptionOffset) * 15.0);
 
         for (int i = 0; i < ClientMaxViewableOptions; i++)
         {
-            hudOptions[i]->SetText(submenu->children[i] ? submenu->children[i]->text : "");
+            hudOptions[i]->SetText(submenu->children[i + currentOptionOffset] ? submenu->children[i + currentOptionOffset]->text : "");
             hudOptions[i]->SetAlpha(0.0);
             hudOptions[i]->SetAlpha(1.0, 400);
         }
         break;
+    }
+    case(CLIENT_THEME_ENSTONE_SMALL):
+    {
+        hudCurrentMenu->SetText(submenu->text);
+        for (int i = 0; i < ClientMaxViewableOptions; i++)
+        {
+            hudOptions[i]->SetText(submenu->children[i + currentOptionOffset] ? submenu->children[i + currentOptionOffset]->text : "");
+        }
+        hudNavBar->SetY(menuPos.y - 45.0 + (currentOption - currentOptionOffset) * 15.0);
     }
     }
 }
@@ -519,6 +546,28 @@ void Client::OnOpen()
         InputSleep(800);
         break;
     }
+    case(CLIENT_THEME_ENSTONE_SMALL):
+    {
+        hudBackground->SetAlpha(0.6);
+        hudComponents[0]->SetAlpha(0.6);
+        hudComponents[1]->SetAlpha(0.6);
+        hudNavBar->SetAlpha(0.6, 750);
+        hudTitle->SetAlpha(1.0);
+        hudAuthor->SetAlpha(1.0);
+        hudCurrentMenu->SetAlpha(1.0, 750);
+
+        for (auto& option : hudOptions)
+            option->SetAlpha(1.0, 750);
+
+        hudBackground->SetHeight(260, 400);
+        hudComponents[0]->AddY(-95.0, 400);
+        hudComponents[1]->AddY(95.0, 400);
+        hudTitle->AddY(-95.0, 400);
+        hudAuthor->AddY(95.0, 400);
+
+        InputSleep(400);
+        break;
+    }
     }
 }
 
@@ -558,6 +607,28 @@ void Client::OnClose()
         InputSleep(800);
         break;
     }
+    case(CLIENT_THEME_ENSTONE_SMALL):
+    {
+        hudBackground->SetHeight(70, 400);
+        hudComponents[0]->AddY(95.0, 400);
+        hudComponents[1]->AddY(-95.0, 400);
+        hudTitle->AddY(95.0, 400);
+        hudAuthor->AddY(-95.0, 400);
+
+        hudBackground->SetAlpha(0.0, 1, 400);
+        hudComponents[0]->SetAlpha(0.0, 1, 400);
+        hudComponents[1]->SetAlpha(0.0, 1, 400);
+        hudNavBar->SetAlpha(0.0);
+        hudTitle->SetAlpha(0.0, 1, 400);
+        hudAuthor->SetAlpha(0.0, 1, 400);
+        hudCurrentMenu->SetAlpha(0.0);
+
+        for (auto& option : hudOptions)
+            option->SetAlpha(0.0);
+
+        InputSleep(400);
+        break;
+    }
     }
 }
 
@@ -584,16 +655,7 @@ void Client::OnPress()
         submenuLevel++;
 
         ChangeSubmenu(selectedOption);
-
-        switch (currentTheme)
-        {
-        case(CLIENT_THEME_MATRIX):
-        {
-            hudNavBar->SetY(114.0 + 15.0 * currentOption);
-            InputSleep(400);
-            break;
-        }
-        }
+        InputSleep(200);
     }
 }
 
@@ -609,16 +671,7 @@ void Client::OnCancel()
         currentOption = previousOption[submenuLevel];
         currentOptionOffset = previousOptionOffset[submenuLevel];
         ChangeSubmenu(previousMenu[submenuLevel]);
-
-        switch (currentTheme)
-        {
-        case(CLIENT_THEME_MATRIX):
-        {
-            hudNavBar->SetY(114.0 + 15.0 * (currentOption - currentOptionOffset));
-            InputSleep(400);
-            break;
-        }
-        }
+        InputSleep(200);
     }
 }
 
@@ -658,6 +711,25 @@ void Client::OnScrollUp()
         hudNavBar->SetY(114.0 + 15.0 * (currentOption - currentOptionOffset), 115);
         break;
     }
+    case(CLIENT_THEME_ENSTONE_SMALL):
+    {
+        if (shouldMoveOptions)
+        {
+            auto* lastOption = hudOptions[ClientMaxViewableOptions - 1];
+
+            for (int i = ClientMaxViewableOptions - 1; i > 0; i--)
+            {
+                hudOptions[i] = hudOptions[i - 1];
+                hudOptions[i]->SetY(menuPos.y - 45.0 + (15.0 * i), 115);
+            }
+
+            hudOptions[0] = lastOption;
+            lastOption->SetY(menuPos.y - 45.0);
+            lastOption->SetText(currentMenu->children[currentOptionOffset]->text);
+        }
+        hudNavBar->SetY(menuPos.y - 45.0 + (currentOption - currentOptionOffset) * 15.0, 115);
+        break;
+    }
     }
 }
 
@@ -691,10 +763,29 @@ void Client::OnScrollDown()
             }
 
             hudOptions[ClientMaxViewableOptions - 1] = firstOption;
-            firstOption->SetY(115.0 + (15.0 * 9));
+            firstOption->SetY(115.0 + (15.0 * 9.0));
             firstOption->SetText(currentMenu->children[currentOptionOffset + ClientMaxViewableOptions - 1]->text);
         }
         hudNavBar->SetY(114.0 + 15.0 * (currentOption - currentOptionOffset), 115);
+        break;
+    }
+    case(CLIENT_THEME_ENSTONE_SMALL):
+    {
+        if (shouldMoveOptions)
+        {
+            auto* firstOption = hudOptions[0];
+
+            for (int i = 0; i < ClientMaxViewableOptions - 1; i++)
+            {
+                hudOptions[i] = hudOptions[i + 1];
+                hudOptions[i]->SetY(menuPos.y - 45.0 + (15.0 * i), 115);
+            }
+
+            hudOptions[ClientMaxViewableOptions - 1] = firstOption;
+            firstOption->SetY(menuPos.y - 45.0 + (15.0 * 9.0));
+            firstOption->SetText(currentMenu->children[currentOptionOffset + ClientMaxViewableOptions - 1]->text);
+        }
+        hudNavBar->SetY(menuPos.y - 45.0 + (currentOption - currentOptionOffset) * 15.0, 115);
         break;
     }
     }
@@ -722,6 +813,11 @@ void Client::SetColor(vec3_t color)
         hudTitle->SetTextGlow(color);
         break;
     }
+    case(CLIENT_THEME_ENSTONE_SMALL):
+        hudComponents[0]->SetRGB(color, 150);
+        hudComponents[1]->SetRGB(color, 150);
+        hudNavBar->SetRGB(color, 150);
+        break;
     }
 }
 
@@ -734,7 +830,18 @@ void Client::Move(float xMove, float yMove)
     {
         menuPos.x += xMove;
         menuPos.y += yMove;
-        GameMessage(clientNum, va("Menu is at: X=%.0f Y=%.0f", menuPos.x, menuPos.y));
+
+        hudBackground->AddPosOvertime(xMove, yMove, 150);
+        hudComponents[0]->AddPosOvertime(xMove, yMove, 150);
+        hudComponents[1]->AddPosOvertime(xMove, yMove, 150);
+        hudNavBar->AddPosOvertime(xMove, yMove, 150);
+        hudTitle->AddPosOvertime(xMove, yMove, 150);
+        hudAuthor->AddPosOvertime(xMove, yMove, 150);
+        hudCurrentMenu->AddPosOvertime(xMove, yMove, 150);
+        for (auto& option : hudOptions)
+            option->AddPosOvertime(xMove, yMove, 150);
+
+        GameMessage(clientNum, va("Menu is at: X=^2%.0f^7 Y=^2%.0f", menuPos.x, menuPos.y));
         break;
     }
     default:
@@ -1360,22 +1467,22 @@ void ThemeColorYellow(int clientNum)
 
 void MoveMenuUp(int clientNum)
 {
-    users[clientNum].Move(-10.0, 0.0);
+    users[clientNum].Move(0.0, -10.0);
 }
 
 void MoveMenuDown(int clientNum)
 {
-    users[clientNum].Move(10.0, 0.0);
+    users[clientNum].Move(0.0, 10.0);
 }
 
 void MoveMenuLeft(int clientNum)
 {
-    users[clientNum].Move(0.0, -10.0);
+    users[clientNum].Move(-10.0, 0.0);
 }
 
 void MoveMenuRight(int clientNum)
 {
-    users[clientNum].Move(0.0, 10.0);
+    users[clientNum].Move(10.0, 0.0);
 }
 
 ///

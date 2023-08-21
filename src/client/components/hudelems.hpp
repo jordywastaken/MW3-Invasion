@@ -61,6 +61,7 @@ public:
     void MoveOvertime(float x, float y, int durationMs = 0, int startDelayMs = 0);
     void SetX(float x, int durationMs = 0, int startDelayMs = 0);
     void SetY(float y, int durationMs = 0, int startDelayMs = 0);
+	void AddPosOvertime(float x, float y, int durationMs = 0, int startDelayMs = 0);
 	void AddX(float x, int durationMs = 0, int startDelayMs = 0);
 	void AddY(float y, int durationMs = 0, int startDelayMs = 0);
 

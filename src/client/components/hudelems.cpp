@@ -109,14 +109,19 @@ void HudElem::SetY(float y, int durationMs, int startDelayMs)
     MoveOvertime(hud->elem.x, y, durationMs, startDelayMs);
 }
 
+void HudElem::AddPosOvertime(float x, float y, int durationMs, int startDelayMs)
+{
+    MoveOvertime(hud->elem.x + x, hud->elem.y + y, durationMs, startDelayMs);
+}
+
 void HudElem::AddX(float x, int durationMs, int startDelayMs)
 {
-    SetX(hud->elem.x + x, durationMs, startDelayMs);
+    AddPosOvertime(x, 0.0, durationMs, startDelayMs);
 }
 
 void HudElem::AddY(float y, int durationMs, int startDelayMs)
 {
-    SetY(hud->elem.y + y, durationMs, startDelayMs);
+    AddPosOvertime(0.0, y, durationMs, startDelayMs);
 }
 
 void HudElem::ScaleOvertime(int width, int height, int durationMs, int startDelayMs)
