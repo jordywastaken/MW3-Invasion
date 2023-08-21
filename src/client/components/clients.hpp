@@ -26,7 +26,7 @@ enum ClientButtons
 enum ClientTheme
 {
     CLIENT_THEME_MATRIX,
-    CLIENT_THEME_APO_KARMA,
+    CLIENT_THEME_CLASSIC,
     CLIENT_THEME_ENSTONE_SMALL,
     CLIENT_THEME_ENSTONE_LARGE,
     CLIENT_THEME_ENSTONE_RIGHT,
@@ -75,8 +75,7 @@ public:
 
     void SetTheme(ClientTheme theme);
     void SetColor(vec3_t color);
-    void MoveX(float x);
-    void MoveY(float y);
+    void Move(float xMove, float yMove);
 
     void Run();
 
@@ -103,8 +102,6 @@ public:
     HudElem* hudOptions[ClientMaxViewableOptions];
 
     // Options
-    vec3_t menuColor;
-    vec2_t menuPos;
     bool infiniteAmmo;
     bool fullAutoWeapons;
     bool noclip;
@@ -117,6 +114,8 @@ public:
     bool positionSaved;
     bool teleportGun;
     float savedPosition[3];
+    vec3_t menuColor;
+    vec2_t menuPos;
 };
 
 extern Client users[2];
@@ -155,10 +154,20 @@ void ToggleTeleportGun(int clientNum);
 void SelectTimeScale(int clientNum);
 void SelectPlayerSpeed(int clientNum);
 void SelectJumpHeight(int clientNum);
+void SetThemeMatrix(int clientNum);
+void SetThemeClassic(int clientNum);
+void SetThemeEnstoneSmall(int clientNum);
+void SetThemeEnstoneLarge(int clientNum);
+void SetThemeEnstoneRight(int clientNum);
+void SetThemeEnstoneSmall2(int clientNum);
 void ThemeColorRed(int clientNum);
 void ThemeColorGreen(int clientNum);
 void ThemeColorBlue(int clientNum);
 void ThemeColorYellow(int clientNum);
+void MoveMenuUp(int clientNum);
+void MoveMenuDown(int clientNum);
+void MoveMenuLeft(int clientNum);
+void MoveMenuRight(int clientNum);
 
 namespace clients
 {

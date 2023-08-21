@@ -240,12 +240,22 @@ void Client::CreateMenu()
     /// 
     /// Settings menu
     /// 
-    auto* settingsMenu = MakeSubmenu("Settings menu");
-    settingsMenu->AddChild("Theme color red", ThemeColorRed);
-    settingsMenu->AddChild("Theme color green", ThemeColorGreen);
-    settingsMenu->AddChild("Theme color blue", ThemeColorBlue);
-    settingsMenu->AddChild("Theme color yellow", ThemeColorYellow);
-    mainMenu->AddChild(settingsMenu);
+    auto* themeMenu = MakeSubmenu("Theme menu");
+    themeMenu->AddChild("Set theme Matrix", SetThemeMatrix);
+    themeMenu->AddChild("Set theme Classic", SetThemeClassic);
+    themeMenu->AddChild("Set theme Enstone small", SetThemeEnstoneSmall);
+    themeMenu->AddChild("Set theme Enstone Large", SetThemeEnstoneLarge);
+    themeMenu->AddChild("Set theme Enstone right", SetThemeEnstoneRight);
+    themeMenu->AddChild("Set theme Enstone small2", SetThemeEnstoneSmall2);
+    themeMenu->AddChild("Theme color red", ThemeColorRed);
+    themeMenu->AddChild("Theme color green", ThemeColorGreen);
+    themeMenu->AddChild("Theme color blue", ThemeColorBlue);
+    themeMenu->AddChild("Theme color yellow", ThemeColorYellow);
+    themeMenu->AddChild("Move menu up", MoveMenuUp);
+    themeMenu->AddChild("Move menu down", MoveMenuDown);
+    themeMenu->AddChild("Move menu left", MoveMenuLeft);
+    themeMenu->AddChild("Move menu right", MoveMenuRight);
+    mainMenu->AddChild(themeMenu);
 
     rootMenu = mainMenu;
     currentMenu = mainMenu;
@@ -287,7 +297,7 @@ void Client::CreateHudElems()
         hudAuthor->SetHorzAlign(HE_HORZALIGN_RIGHT);
         hudAuthor->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
 
-        hudCurrentMenu = CreateTextHudElem(clientNum, "Main menu", 1.6, 75.0, 85.0, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudCurrentMenu = CreateTextHudElem(clientNum, currentMenu->text, 1.6, 75.0, 85.0, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
         hudCurrentMenu->SetHorzAlign(HE_HORZALIGN_RIGHT);
 
         for (int i = 0; i < ClientMaxViewableOptions; i++)
@@ -549,13 +559,16 @@ void Client::OnPress()
     }
     else if (currentMenu->children[currentOption]->GetChildCount() != 0)
     {
+        auto* selectedOption = currentMenu->children[currentOption];
+
         previousMenu[submenuLevel] = currentMenu;
         previousOption[submenuLevel] = currentOption;
         previousOptionOffset[submenuLevel] = currentOptionOffset;
         currentOption = 0;
         currentOptionOffset = 0;
         submenuLevel++;
-        ChangeSubmenu(currentMenu->children[currentOption]);
+
+        ChangeSubmenu(selectedOption);
 
         switch (currentTheme)
         {
@@ -669,6 +682,49 @@ void Client::OnScrollDown()
         hudNavBar->SetY(114.0 + 15.0 * (currentOption - currentOptionOffset), 115);
         break;
     }
+    }
+}
+
+void Client::SetTheme(ClientTheme theme)
+{
+    DestroyHudElems();
+    currentTheme = theme;
+    hudBackground = 0;
+    OnOpen();
+}
+
+void Client::SetColor(vec3_t color)
+{
+    menuColor = color;
+
+    switch (currentTheme)
+    {
+    case(CLIENT_THEME_MATRIX):
+    {
+        hudComponents[0]->SetRGB(color, 150);
+        hudNavBar->SetRGB(color, 150);
+        hudAuthor->SetRGB(color, 150);
+        hudTitle->SetTextGlow(color);
+        break;
+    }
+    }
+}
+
+void Client::Move(float xMove, float yMove)
+{
+    switch (currentTheme)
+    {
+    case(CLIENT_THEME_ENSTONE_SMALL):
+    case(CLIENT_THEME_ENSTONE_SMALL2):
+    {
+        menuPos.x += xMove;
+        menuPos.y += yMove;
+        GameMessage(clientNum, va("Menu is at: X=%.0f Y=%.0f", menuPos.x, menuPos.y));
+        break;
+    }
+    default:
+        GameMessage(clientNum, "Not supported with the current theme");
+        break;
     }
 }
 
@@ -1227,48 +1283,84 @@ void SelectJumpHeight(int clientNum)
     GameMessage(clientNum, va("Jump height set to: ^2%s", jumpHeightValue));
 }
 
+void SetThemeMatrix(int clientNum)
+{
+    users[clientNum].SetTheme(CLIENT_THEME_MATRIX);
+    GameMessage(clientNum, va("Theme set: ^2Matrix"));
+}
+
+void SetThemeClassic(int clientNum)
+{
+    users[clientNum].SetTheme(CLIENT_THEME_CLASSIC);
+    GameMessage(clientNum, va("Theme set: ^2Classic"));
+}
+
+void SetThemeEnstoneSmall(int clientNum)
+{
+    users[clientNum].SetTheme(CLIENT_THEME_ENSTONE_SMALL);
+    GameMessage(clientNum, va("Theme set: ^2Enstone small"));
+}
+
+void SetThemeEnstoneLarge(int clientNum)
+{
+    users[clientNum].SetTheme(CLIENT_THEME_ENSTONE_LARGE);
+    GameMessage(clientNum, va("Theme set: ^2Enstone large"));
+}
+
+void SetThemeEnstoneRight(int clientNum)
+{
+    users[clientNum].SetTheme(CLIENT_THEME_ENSTONE_RIGHT);
+    GameMessage(clientNum, va("Theme set: ^2Enstone right"));
+}
+
+void SetThemeEnstoneSmall2(int clientNum)
+{
+    users[clientNum].SetTheme(CLIENT_THEME_ENSTONE_SMALL2);
+    GameMessage(clientNum, va("Theme set: ^2Enstone small2"));
+}
+
 void ThemeColorRed(int clientNum)
 {
-    vec3_t color{ 0.9, 0.1, 0.01 };
-    users[clientNum].hudComponents[0]->SetRGB(color, 200);
-    users[clientNum].hudNavBar->SetRGB(color, 200);
-    users[clientNum].hudAuthor->SetRGB(color, 200);
-    users[clientNum].hudTitle->SetTextGlow(color);
-
+    users[clientNum].SetColor({ 0.9, 0.1, 0.01 });
     GameMessage(clientNum, "Theme color: ^1red");
 }
 
 void ThemeColorGreen(int clientNum)
 {
-    vec3_t color{ 0.008, 0.5, 0.2 };
-    users[clientNum].hudComponents[0]->SetRGB(color, 200);
-    users[clientNum].hudNavBar->SetRGB(color, 200);
-    users[clientNum].hudAuthor->SetRGB(color, 200);
-    users[clientNum].hudTitle->SetTextGlow(color);
-
+    users[clientNum].SetColor({ 0.008, 0.5, 0.2 });
     GameMessage(clientNum, "Theme color: ^2green");
 }
 
 void ThemeColorBlue(int clientNum)
 {
-    vec3_t color{ 0.0, 0.0, 1.0 };
-    users[clientNum].hudComponents[0]->SetRGB(color, 200);
-    users[clientNum].hudNavBar->SetRGB(color, 200);
-    users[clientNum].hudAuthor->SetRGB(color, 200);
-    users[clientNum].hudTitle->SetTextGlow(color);
-
+    users[clientNum].SetColor({ 0.0, 0.0, 1.0 });
     GameMessage(clientNum, "Theme color: ^4blue");
 }
 
 void ThemeColorYellow(int clientNum)
 {
-    vec3_t color{ 1.0, 1.0, 0.0 };
-    users[clientNum].hudComponents[0]->SetRGB(color, 200);
-    users[clientNum].hudNavBar->SetRGB(color, 200);
-    users[clientNum].hudAuthor->SetRGB(color, 200);
-    users[clientNum].hudTitle->SetTextGlow(color);
-
+    users[clientNum].SetColor({ 1.0, 1.0, 0.0 });
     GameMessage(clientNum, "Theme color: ^3yellow");
+}
+
+void MoveMenuUp(int clientNum)
+{
+    users[clientNum].Move(-10.0, 0.0);
+}
+
+void MoveMenuDown(int clientNum)
+{
+    users[clientNum].Move(10.0, 0.0);
+}
+
+void MoveMenuLeft(int clientNum)
+{
+    users[clientNum].Move(0.0, -10.0);
+}
+
+void MoveMenuRight(int clientNum)
+{
+    users[clientNum].Move(0.0, 10.0);
 }
 
 ///
