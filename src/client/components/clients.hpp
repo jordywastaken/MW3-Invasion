@@ -3,7 +3,8 @@
 
 #include "hudelems.hpp"
 
-static constexpr int ClientMaxOptions = 25;
+static constexpr int ClientMaxOptions = 50;
+static constexpr int ClientMaxViewableOptions = 10;
 
 enum ClientButtons
 {
@@ -74,6 +75,8 @@ public:
 
     void SetTheme(ClientTheme theme);
     void SetColor(vec3_t color);
+    void MoveX(float x);
+    void MoveY(float y);
 
     void Run();
 
@@ -83,10 +86,12 @@ public:
     int buttonBits;
     int buttonTick;
     int currentOption;
+    int currentOptionOffset;
     ClientOption* rootMenu;
     ClientOption* currentMenu;
     ClientOption* previousMenu[10];
     int previousOption[10];
+    int previousOptionOffset[10];
     int submenuLevel;
     ClientTheme currentTheme;
     HudElem* hudBackground;
@@ -95,10 +100,11 @@ public:
     HudElem* hudTitle;
     HudElem* hudAuthor;
     HudElem* hudCurrentMenu;
-    HudElem* hudOptions[ClientMaxOptions];
+    HudElem* hudOptions[ClientMaxViewableOptions];
 
     // Options
     vec3_t menuColor;
+    vec2_t menuPos;
     bool infiniteAmmo;
     bool fullAutoWeapons;
     bool noclip;

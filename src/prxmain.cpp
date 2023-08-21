@@ -14,7 +14,7 @@
 /// Module exports
 /// 
 #pragma diag_suppress 77
-SYS_MODULE_INFO(Invasion, 0, 1, 1);
+SYS_MODULE_INFO(Invasion, 0, 1, 2);
 SYS_MODULE_START(_Z13InvasionStartv);
 SYS_MODULE_STOP(_Z12InvasionStopv);
 

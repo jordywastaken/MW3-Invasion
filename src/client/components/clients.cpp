@@ -12,27 +12,6 @@ Client users[2];
 /// float scaleRealToVirtual[2]{ 0.6666666666, 0.4444444444 };
 /// 
 
-// Menu constant values
-// TODO(Jordy): Remove those filthy constants.
-static constexpr int ClientMenuWidth = 250;
-static constexpr int ClientMenuHeight = 480;
-static constexpr int ClientMenuBorderWidth = 2;
-static constexpr int ClientMenuNavBarHeight = 15;
-
-static constexpr int ClientMenuSlideInDuration = 400;
-static constexpr int ClientMenuFadeInDuration = 400;
-static constexpr int ClientMenuSlideOutDuration = 400;
-static constexpr int ClientMenuFadeOutDuration = 400;
-
-static constexpr int ClientMenuScrollDuration = 175;
-
-static constexpr float ClientMenuX = 67.0;
-static constexpr float ClientMenuTitleY = 50.0;
-static constexpr float ClientMenuAuthorY = 70.0;
-static constexpr float ClientMenuCurrentMenuY = 85.0;
-static constexpr float ClientMenuOptionY = 115.0;
-static constexpr float ClientMenuOptionX = ClientMenuX + 7.5;
-
 ClientOption::ClientOption(const char* text, void(*callback)(int))
     : text(text), callback(callback)
 {
@@ -288,32 +267,32 @@ void Client::CreateHudElems()
     case(CLIENT_THEME_MATRIX):
     {
         // Panels
-        hudBackground = CreateMaterialHudElem(clientNum, "white", ClientMenuWidth, ClientMenuHeight, ClientMenuX, 0.0, 0.0, { 0.0, 0.0, 0.0 }, 0.0);
+        hudBackground = CreateMaterialHudElem(clientNum, "white", 250, 480, 67.0, 0.0, 0.0, { 0.0, 0.0, 0.0 }, 0.0);
         hudBackground->SetHorzAlign(HE_HORZALIGN_RIGHT);
 
-        hudComponents[0] = CreateMaterialHudElem(clientNum, "white", ClientMenuBorderWidth, ClientMenuHeight, ClientMenuX - ClientMenuBorderWidth, 0.0, 1.0, menuColor, 0.0);
+        hudComponents[0] = CreateMaterialHudElem(clientNum, "white", 2, 480, 65.0, 0.0, 1.0, menuColor, 0.0);
         hudComponents[0]->SetHorzAlign(HE_HORZALIGN_RIGHT);
 
-        hudNavBar = CreateMaterialHudElem(clientNum, "white", ClientMenuWidth, ClientMenuNavBarHeight, ClientMenuX, ClientMenuOptionY - 1.0, 1.0, menuColor, 0.0);
+        hudNavBar = CreateMaterialHudElem(clientNum, "white", 250, 15, 67.0, 114.0, 1.0, menuColor, 0.0);
         hudNavBar->SetHorzAlign(HE_HORZALIGN_RIGHT);
 
         // Labels
-        hudTitle = CreateTextHudElem(clientNum, "Invasion", 2.0, ClientMenuX + ClientMenuWidth / 2, ClientMenuTitleY, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudTitle = CreateTextHudElem(clientNum, "Invasion", 2.0, 192.0, 50.0, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
         hudTitle->SetHorzAlign(HE_HORZALIGN_RIGHT);
         hudTitle->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
         hudTitle->SetTextFont(HE_FONT_OBJECTIVE);
         hudTitle->SetTextGlow(menuColor);
 
-        hudAuthor = CreateTextHudElem(clientNum, "by Jordy", 1.0, ClientMenuX + ClientMenuWidth / 2, ClientMenuAuthorY, 1.0, menuColor, 0.0);
+        hudAuthor = CreateTextHudElem(clientNum, "by Jordy", 1.0, 192.0, 70.0, 1.0, menuColor, 0.0);
         hudAuthor->SetHorzAlign(HE_HORZALIGN_RIGHT);
         hudAuthor->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
 
-        hudCurrentMenu = CreateTextHudElem(clientNum, "Main menu", 1.6, ClientMenuOptionX, ClientMenuCurrentMenuY, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudCurrentMenu = CreateTextHudElem(clientNum, "Main menu", 1.6, 75.0, 85.0, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
         hudCurrentMenu->SetHorzAlign(HE_HORZALIGN_RIGHT);
 
-        for (int i = 0; i < ClientMaxOptions; i++)
+        for (int i = 0; i < ClientMaxViewableOptions; i++)
         {
-            hudOptions[i] = CreateTextHudElem(clientNum, currentMenu->children[i] ? currentMenu->children[i]->text : "", 1.0, ClientMenuOptionX, ClientMenuOptionY + (ClientMenuNavBarHeight * i), 2.0, { 1.0, 1.0, 1.0 }, 0.0);
+            hudOptions[i] = CreateTextHudElem(clientNum, currentMenu->children[i] ? currentMenu->children[i]->text : "", 1.0, 75.0, 115.0 + (15.0 * i), 2.0, { 1.0, 1.0, 1.0 }, 0.0);
             hudOptions[i]->SetHorzAlign(HE_HORZALIGN_RIGHT);
         }
         break;
@@ -334,7 +313,7 @@ void Client::DestroyHudElems()
     delete hudAuthor;
     delete hudCurrentMenu;
 
-    for(int i = 0; i < ClientMaxOptions; i++)
+    for(int i = 0; i < ClientMaxViewableOptions; i++)
         delete hudOptions[i];
 }
 
@@ -345,6 +324,7 @@ void Client::SetDefaults()
     buttonBits = 0;
     buttonTick = 0;
     currentOption = 0;
+    currentOptionOffset = 0;
     rootMenu = 0;
     currentMenu = 0;
 
@@ -352,6 +332,7 @@ void Client::SetDefaults()
     {
         previousMenu[i] = 0;
         previousOption[i] = 0;
+        previousOptionOffset[i] = 0;
     }
     submenuLevel = 0;
 
@@ -363,11 +344,12 @@ void Client::SetDefaults()
     hudAuthor = 0;
     hudCurrentMenu = 0;
 
-    for (int i = 0; i < ClientMaxOptions; i++)
+    for (int i = 0; i < ClientMaxViewableOptions; i++)
         hudOptions[i] = 0;
 
     // Options
     menuColor = { 0.008, 0.5, 0.2 };
+    menuPos = { 0.0, 0.0 };
     infiniteAmmo = false;
     fullAutoWeapons = false;
     noclip = false;
@@ -435,17 +417,16 @@ void Client::HandleInput()
 
 void Client::InputSleep(int ms)
 {
-    buttonTick = level.time + ms;
+    buttonTick = Sys_Milliseconds() + ms;
 }
 
 bool Client::InputReady()
 {
-    return level.time > buttonTick;
+    return Sys_Milliseconds() >= buttonTick;
 }
 
 void Client::ChangeSubmenu(ClientOption* submenu)
 {
-    currentOption = 0;
     currentMenu = submenu;
 
     switch (currentTheme)
@@ -454,16 +435,16 @@ void Client::ChangeSubmenu(ClientOption* submenu)
     {
         hudCurrentMenu->SetText(submenu->text);
         hudCurrentMenu->SetAlpha(0.0);
-        hudCurrentMenu->SetAlpha(1.0, ClientMenuFadeInDuration);
+        hudCurrentMenu->SetAlpha(1.0, 400);
 
         hudNavBar->SetAlpha(0.0);
-        hudNavBar->SetAlpha(0.5, ClientMenuFadeInDuration);
+        hudNavBar->SetAlpha(0.5, 400);
 
-        for (int i = 0; i < ClientMaxOptions; i++)
+        for (int i = 0; i < ClientMaxViewableOptions; i++)
         {
             hudOptions[i]->SetText(submenu->children[i] ? submenu->children[i]->text : "");
             hudOptions[i]->SetAlpha(0.0);
-            hudOptions[i]->SetAlpha(1.0, ClientMenuFadeInDuration);
+            hudOptions[i]->SetAlpha(1.0, 400);
         }
         break;
     }
@@ -488,29 +469,29 @@ void Client::OnOpen()
     case(CLIENT_THEME_MATRIX):
     {
         // Slide in
-        hudBackground->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-        hudComponents[0]->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-        hudTitle->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-        hudAuthor->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+        hudBackground->AddX(-250.0, 400);
+        hudComponents[0]->AddX(-250.0, 400);
+        hudTitle->AddX(-250.0, 400);
+        hudAuthor->AddX(-250.0, 400);
 
-        hudNavBar->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
-        hudCurrentMenu->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+        hudNavBar->AddX(-250.0, 400);
+        hudCurrentMenu->AddX(-250.0, 400);
         for (auto option : hudOptions)
-            option->AddX(-ClientMenuWidth, ClientMenuSlideInDuration);
+            option->AddX(-250.0, 400);
 
         // Fade in
-        hudBackground->SetAlpha(0.6, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
-        hudComponents[0]->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
-        hudTitle->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
-        hudAuthor->SetAlpha(1.0, ClientMenuSlideInDuration + ClientMenuFadeInDuration);
+        hudBackground->SetAlpha(0.6, 800);
+        hudComponents[0]->SetAlpha(1.0, 800);
+        hudTitle->SetAlpha(1.0, 800);
+        hudAuthor->SetAlpha(1.0, 800);
 
         // Start fading after the slide in animation
-        hudNavBar->SetAlpha(0.6, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
-        hudCurrentMenu->SetAlpha(1.0, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
+        hudNavBar->SetAlpha(0.6, 400, 400);
+        hudCurrentMenu->SetAlpha(1.0, 400, 400);
         for (auto option : hudOptions)
-            option->SetAlpha(1.0, ClientMenuFadeInDuration, ClientMenuSlideInDuration);
+            option->SetAlpha(1.0, 400, 400);
 
-        InputSleep(ClientMenuSlideInDuration + ClientMenuFadeInDuration);
+        InputSleep(800);
         break;
     }
     }
@@ -528,28 +509,28 @@ void Client::OnClose()
     case(CLIENT_THEME_MATRIX):
     {
         // Fade out
-        hudBackground->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
-        hudComponents[0]->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
-        hudTitle->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
-        hudAuthor->SetAlpha(0.0, ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
+        hudBackground->SetAlpha(0.0, 800);
+        hudComponents[0]->SetAlpha(0.0, 800);
+        hudTitle->SetAlpha(0.0, 800);
+        hudAuthor->SetAlpha(0.0, 800);
 
-        hudNavBar->SetAlpha(0.0, ClientMenuFadeOutDuration);
-        hudCurrentMenu->SetAlpha(0.0, ClientMenuFadeOutDuration);
+        hudNavBar->SetAlpha(0.0, 400);
+        hudCurrentMenu->SetAlpha(0.0, 400);
         for (auto option : hudOptions)
-            option->SetAlpha(0.0, ClientMenuFadeOutDuration);
+            option->SetAlpha(0.0, 400);
 
         // Slide out once the fading animation is done
-        hudBackground->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-        hudComponents[0]->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-        hudTitle->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-        hudAuthor->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        hudBackground->AddX(250.0, 400, 400);
+        hudComponents[0]->AddX(250.0, 400, 400);
+        hudTitle->AddX(250.0, 400, 400);
+        hudAuthor->AddX(250.0, 400, 400);
 
-        hudNavBar->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
-        hudCurrentMenu->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+        hudNavBar->AddX(250.0, 400, 400);
+        hudCurrentMenu->AddX(250.0, 400, 400);
         for (auto option : hudOptions)
-            option->AddX(ClientMenuWidth, ClientMenuSlideOutDuration, ClientMenuFadeOutDuration);
+            option->AddX(250.0, 400, 400);
 
-        InputSleep(ClientMenuSlideOutDuration + ClientMenuFadeOutDuration);
+        InputSleep(800);
         break;
     }
     }
@@ -570,6 +551,9 @@ void Client::OnPress()
     {
         previousMenu[submenuLevel] = currentMenu;
         previousOption[submenuLevel] = currentOption;
+        previousOptionOffset[submenuLevel] = currentOptionOffset;
+        currentOption = 0;
+        currentOptionOffset = 0;
         submenuLevel++;
         ChangeSubmenu(currentMenu->children[currentOption]);
 
@@ -577,8 +561,8 @@ void Client::OnPress()
         {
         case(CLIENT_THEME_MATRIX):
         {
-            hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption);
-            InputSleep(ClientMenuFadeInDuration);
+            hudNavBar->SetY(114.0 + 15.0 * currentOption);
+            InputSleep(400);
             break;
         }
         }
@@ -594,15 +578,16 @@ void Client::OnCancel()
     else
     {
         submenuLevel--;
-        ChangeSubmenu(previousMenu[submenuLevel]);
         currentOption = previousOption[submenuLevel];
+        currentOptionOffset = previousOptionOffset[submenuLevel];
+        ChangeSubmenu(previousMenu[submenuLevel]);
 
         switch (currentTheme)
         {
         case(CLIENT_THEME_MATRIX):
         {
-            hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption);
-            InputSleep(ClientMenuFadeInDuration);
+            hudNavBar->SetY(114.0 + 15.0 * (currentOption - currentOptionOffset));
+            InputSleep(400);
             break;
         }
         }
@@ -611,14 +596,38 @@ void Client::OnCancel()
 
 void Client::OnScrollUp()
 {
-    currentOption = currentOption == 0 ? currentMenu->GetChildCount() - 1 : currentOption - 1;
+    InputSleep(115);
+    if (currentOption == 0)
+        return;
+
+    bool shouldMoveOptions = false;
+
+    if (currentOptionOffset > 0 && currentOptionOffset == currentOption)
+    {
+        shouldMoveOptions = true;
+        currentOptionOffset--;
+    }
+    currentOption--;
 
     switch (currentTheme)
     {
     case(CLIENT_THEME_MATRIX):
     {
-        hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, ClientMenuScrollDuration);
-        InputSleep(ClientMenuScrollDuration);
+        if (shouldMoveOptions)
+        {
+            auto* lastOption = hudOptions[ClientMaxViewableOptions - 1];
+
+            for (int i = ClientMaxViewableOptions - 1; i > 0; i--)
+            {
+                hudOptions[i] = hudOptions[i - 1];
+                hudOptions[i]->SetY(115.0 + (15.0 * i), 115);
+            }
+
+            hudOptions[0] = lastOption;
+            lastOption->SetY(115.0);
+            lastOption->SetText(currentMenu->children[currentOptionOffset]->text);
+        }
+        hudNavBar->SetY(114.0 + 15.0 * (currentOption - currentOptionOffset), 115);
         break;
     }
     }
@@ -626,14 +635,38 @@ void Client::OnScrollUp()
 
 void Client::OnScrollDown()
 {
-    currentOption = currentOption == (currentMenu->GetChildCount() - 1) ? 0 : currentOption + 1;
+    InputSleep(115);
+    if (currentOption == currentMenu->GetChildCount() - 1)
+        return;
+
+    bool shouldMoveOptions = false;
+
+    if (currentOption - currentOptionOffset == ClientMaxViewableOptions - 1)
+    {
+        shouldMoveOptions = true;
+        currentOptionOffset++;
+    }
+    currentOption++;
 
     switch (currentTheme)
     {
     case(CLIENT_THEME_MATRIX):
     {
-        hudNavBar->SetY(ClientMenuOptionY - 1 + ClientMenuNavBarHeight * currentOption, ClientMenuScrollDuration);
-        InputSleep(ClientMenuScrollDuration);
+        if (shouldMoveOptions)
+        {
+            auto* firstOption = hudOptions[0];
+
+            for (int i = 0; i < ClientMaxViewableOptions - 1; i++)
+            {
+                hudOptions[i] = hudOptions[i + 1];
+                hudOptions[i]->SetY(115.0 + (15.0 * i), 115);
+            }
+
+            hudOptions[ClientMaxViewableOptions - 1] = firstOption;
+            firstOption->SetY(115.0 + (15.0 * 9));
+            firstOption->SetText(currentMenu->children[currentOptionOffset + ClientMaxViewableOptions - 1]->text);
+        }
+        hudNavBar->SetY(114.0 + 15.0 * (currentOption - currentOptionOffset), 115);
         break;
     }
     }
