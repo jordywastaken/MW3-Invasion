@@ -1,5 +1,5 @@
 
-#include "clients.hpp"
+#include "onHost.hpp"
 #include "scheduler.hpp"
 #include "common/utils/hooking.hpp"
 #include "common/utils/imports.hpp"
@@ -64,30 +64,30 @@ void Client::CreateMenu()
     /// Main mods menu
     /// 
     auto* mainModsMenu = MakeSubmenu("Main mods menu");
-    mainModsMenu->AddChild("God mode", ToggleGodMode);
-    mainModsMenu->AddChild("Infinite ammo", ToggleInfiniteAmmo);
-    mainModsMenu->AddChild("No spread", ToggleNoSpread);
-    mainModsMenu->AddChild("No recoil", ToggleNoRecoil);
-    mainModsMenu->AddChild("Full auto weapons", ToggleFullAutoWeapons);
-    mainModsMenu->AddChild("Movement speed x2", ToggleMovementSpeed);
+    mainModsMenu->AddChild("God mode", ToggleGodMode_f);
+    mainModsMenu->AddChild("Infinite ammo", ToggleInfiniteAmmo_f);
+    mainModsMenu->AddChild("No spread", ToggleNoSpread_f);
+    mainModsMenu->AddChild("No recoil", ToggleNoRecoil_f);
+    mainModsMenu->AddChild("Full auto weapons", ToggleFullAutoWeapons_f);
+    mainModsMenu->AddChild("Movement speed x2", ToggleMovementSpeed_f);
 
     // For now only the host can edit client side dvars
     if (clientNum == 0)
     {
         auto* fovMenu = MakeSubmenu("Fov menu");
-        fovMenu->AddChild("65 (Default)", SelectFov);
-        fovMenu->AddChild("80", SelectFov);
-        fovMenu->AddChild("90", SelectFov);
-        fovMenu->AddChild("100", SelectFov);
-        fovMenu->AddChild("110", SelectFov);
-        fovMenu->AddChild("120", SelectFov);
+        fovMenu->AddChild("65 (Default)", SelectFov_f);
+        fovMenu->AddChild("80", SelectFov_f);
+        fovMenu->AddChild("90", SelectFov_f);
+        fovMenu->AddChild("100", SelectFov_f);
+        fovMenu->AddChild("110", SelectFov_f);
+        fovMenu->AddChild("120", SelectFov_f);
         mainModsMenu->AddChild(fovMenu);
     }
 
     auto* movementTypeMenu = MakeSubmenu("Movement type menu");
-    movementTypeMenu->AddChild("Noclip", ToggleNoclip);
-    movementTypeMenu->AddChild("UFO mode", ToggleUfoMode);
-    movementTypeMenu->AddChild("Bind noclip to \x12", ToggleNoclipBind);
+    movementTypeMenu->AddChild("Noclip", ToggleNoclip_f);
+    movementTypeMenu->AddChild("UFO mode", ToggleUfoMode_f);
+    movementTypeMenu->AddChild("Bind noclip to \x12", ToggleNoclipBind_f);
     mainModsMenu->AddChild(movementTypeMenu);
 
     mainMenu->AddChild(mainModsMenu);
@@ -96,21 +96,21 @@ void Client::CreateMenu()
     /// Fun menu
     /// 
     auto* funMenu = MakeSubmenu("Fun menu");
-    funMenu->AddChild("Rocket ride", ToggleRocketRide);
-    funMenu->AddChild("Rocket jump", ToggleRocketJump);
-    funMenu->AddChild("Rocket jump strength", ToggleRocketJumpStrength);
+    funMenu->AddChild("Rocket ride", ToggleRocketRide_f);
+    funMenu->AddChild("Rocket jump", ToggleRocketJump_f);
+    funMenu->AddChild("Rocket jump strength", ToggleRocketJumpStrength_f);
     mainMenu->AddChild(funMenu);
 
     /// 
     /// Perks menu
     /// 
     auto* perksMenu = MakeSubmenu("Perks menu");
-    perksMenu->AddChild("Set all perks", SetAllPerks);
-    perksMenu->AddChild("Clear all perks", ClearAllPerks);
+    perksMenu->AddChild("Set all perks", SetAllPerks_f);
+    perksMenu->AddChild("Clear all perks", ClearAllPerks_f);
     mainMenu->AddChild(perksMenu);
 
     for (int i = 0; i < 21; i++)
-        perksMenu->AddChild(bg_perkNames[i], SelectPerk);
+        perksMenu->AddChild(bg_perkNames[i], SelectPerk_f);
 
     /// 
     /// Weapon menu & Projectile menu
@@ -123,10 +123,12 @@ void Client::CreateMenu()
     weaponMenu->AddChild(MakeSubmenu("Sniper menu"));
     weaponMenu->AddChild(MakeSubmenu("Pistol menu"));
     weaponMenu->AddChild(MakeSubmenu("Rocket launcher menu"));
+    weaponMenu->AddChild("Take current weapon", TakeCurrentWeapon_f);
+    weaponMenu->AddChild("Refill ammo", RefillAmmo_f);
     mainMenu->AddChild(weaponMenu);
 
     auto* projectileMenu = MakeSubmenu("Projectile menu");
-    projectileMenu->AddChild("None", ResetProjectile);
+    projectileMenu->AddChild("None", ResetProjectile_f);
     mainMenu->AddChild(projectileMenu);
 
     for (int i = 0; i < 240; i++)
@@ -150,12 +152,12 @@ void Client::CreateMenu()
 
         if (childIndex != -1)
         {
-            weaponMenu->children[childIndex]->AddChild(bg_weaponCompleteDefs[i]->szInternalName, SelectWeapon);
+            weaponMenu->children[childIndex]->AddChild(bg_weaponCompleteDefs[i]->szInternalName, SelectWeapon_f);
         }
 
         if (bg_weaponCompleteDefs[i]->weapDef->weapType == WEAPTYPE_PROJECTILE)
         {
-            projectileMenu->AddChild(bg_weaponCompleteDefs[i]->szInternalName, SetProjectile);
+            projectileMenu->AddChild(bg_weaponCompleteDefs[i]->szInternalName, SetProjectile_f);
         }
     }
 
@@ -163,35 +165,35 @@ void Client::CreateMenu()
     /// Vision menu
     /// 
     auto* visionMenu = MakeSubmenu("Vision menu");
-    visionMenu->AddChild("default", SelectVision);
-    visionMenu->AddChild("default_night", SelectVision);
-    visionMenu->AddChild("ac130", SelectVision);
-    visionMenu->AddChild("ac130_inverted", SelectVision);
-    visionMenu->AddChild("cheat_bw", SelectVision);
-    visionMenu->AddChild("cheat_bw_contrast", SelectVision);
-    visionMenu->AddChild("cheat_bw_invert", SelectVision);
-    visionMenu->AddChild("cheat_bw_invert_contrast", SelectVision);
-    visionMenu->AddChild("cheat_chaplinnight", SelectVision);
-    visionMenu->AddChild("cheat_contrast", SelectVision);
-    visionMenu->AddChild("cheat_invert", SelectVision);
-    visionMenu->AddChild("cheat_invert_contrast", SelectVision);
-    visionMenu->AddChild("end_game", SelectVision);
-    visionMenu->AddChild("icbm", SelectVision);
-    visionMenu->AddChild("invasion", SelectVision);
-    visionMenu->AddChild("mpnuke", SelectVision);
-    visionMenu->AddChild("mpnuke_aftermath", SelectVision);
-    visionMenu->AddChild("near_death", SelectVision);
-    visionMenu->AddChild("sepia", SelectVision);
+    visionMenu->AddChild("default", SelectVision_f);
+    visionMenu->AddChild("default_night", SelectVision_f);
+    visionMenu->AddChild("ac130", SelectVision_f);
+    visionMenu->AddChild("ac130_inverted", SelectVision_f);
+    visionMenu->AddChild("cheat_bw", SelectVision_f);
+    visionMenu->AddChild("cheat_bw_contrast", SelectVision_f);
+    visionMenu->AddChild("cheat_bw_invert", SelectVision_f);
+    visionMenu->AddChild("cheat_bw_invert_contrast", SelectVision_f);
+    visionMenu->AddChild("cheat_chaplinnight", SelectVision_f);
+    visionMenu->AddChild("cheat_contrast", SelectVision_f);
+    visionMenu->AddChild("cheat_invert", SelectVision_f);
+    visionMenu->AddChild("cheat_invert_contrast", SelectVision_f);
+    visionMenu->AddChild("end_game", SelectVision_f);
+    visionMenu->AddChild("icbm", SelectVision_f);
+    visionMenu->AddChild("invasion", SelectVision_f);
+    visionMenu->AddChild("mpnuke", SelectVision_f);
+    visionMenu->AddChild("mpnuke_aftermath", SelectVision_f);
+    visionMenu->AddChild("near_death", SelectVision_f);
+    visionMenu->AddChild("sepia", SelectVision_f);
     mainMenu->AddChild(visionMenu);
 
     /// 
     /// Teleport menu
     /// 
     auto* teleportMenu = MakeSubmenu("Teleport menu");
-    teleportMenu->AddChild("Save position", SavePosition);
-    teleportMenu->AddChild("Load position", LoadPosition);
-    teleportMenu->AddChild("Teleport to crosshair", TeleportToCrosshair);
-    teleportMenu->AddChild("Teleport gun", ToggleTeleportGun);
+    teleportMenu->AddChild("Save position", SavePosition_f);
+    teleportMenu->AddChild("Load position", LoadPosition_f);
+    teleportMenu->AddChild("Teleport to crosshair", TeleportToCrosshair_f);
+    teleportMenu->AddChild("Teleport gun", ToggleTeleportGun_f);
     mainMenu->AddChild(teleportMenu);
 
     /// 
@@ -199,34 +201,34 @@ void Client::CreateMenu()
     /// 
     auto* lobbyMenu = MakeSubmenu("Lobby menu");
     auto* timeScaleMenu = MakeSubmenu("Time scale menu");
-    timeScaleMenu->AddChild("x0.1", SelectTimeScale);
-    timeScaleMenu->AddChild("x0.25", SelectTimeScale);
-    timeScaleMenu->AddChild("x0.5", SelectTimeScale);
-    timeScaleMenu->AddChild("x0.75", SelectTimeScale);
-    timeScaleMenu->AddChild("x1", SelectTimeScale);
-    timeScaleMenu->AddChild("x2", SelectTimeScale);
+    timeScaleMenu->AddChild("x0.1", SelectTimeScale_f);
+    timeScaleMenu->AddChild("x0.25", SelectTimeScale_f);
+    timeScaleMenu->AddChild("x0.5", SelectTimeScale_f);
+    timeScaleMenu->AddChild("x0.75", SelectTimeScale_f);
+    timeScaleMenu->AddChild("x1", SelectTimeScale_f);
+    timeScaleMenu->AddChild("x2", SelectTimeScale_f);
     lobbyMenu->AddChild(timeScaleMenu);
 
     auto* playerSpeedMenu = MakeSubmenu("Player speed menu");
-    playerSpeedMenu->AddChild("190 (Default)", SelectPlayerSpeed);
-    playerSpeedMenu->AddChild("250", SelectPlayerSpeed);
-    playerSpeedMenu->AddChild("400", SelectPlayerSpeed);
-    playerSpeedMenu->AddChild("500", SelectPlayerSpeed);
-    playerSpeedMenu->AddChild("600", SelectPlayerSpeed);
-    playerSpeedMenu->AddChild("700", SelectPlayerSpeed);
-    playerSpeedMenu->AddChild("800", SelectPlayerSpeed);
-    playerSpeedMenu->AddChild("900", SelectPlayerSpeed);
-    playerSpeedMenu->AddChild("1000", SelectPlayerSpeed);
+    playerSpeedMenu->AddChild("190 (Default)", SelectPlayerSpeed_f);
+    playerSpeedMenu->AddChild("250", SelectPlayerSpeed_f);
+    playerSpeedMenu->AddChild("400", SelectPlayerSpeed_f);
+    playerSpeedMenu->AddChild("500", SelectPlayerSpeed_f);
+    playerSpeedMenu->AddChild("600", SelectPlayerSpeed_f);
+    playerSpeedMenu->AddChild("700", SelectPlayerSpeed_f);
+    playerSpeedMenu->AddChild("800", SelectPlayerSpeed_f);
+    playerSpeedMenu->AddChild("900", SelectPlayerSpeed_f);
+    playerSpeedMenu->AddChild("1000", SelectPlayerSpeed_f);
     lobbyMenu->AddChild(playerSpeedMenu);
 
     auto* jumpHeightMenu = MakeSubmenu("Jump height menu");
-    jumpHeightMenu->AddChild("39 (Default)", SelectJumpHeight);
-    jumpHeightMenu->AddChild("50", SelectJumpHeight);
-    jumpHeightMenu->AddChild("100", SelectJumpHeight);
-    jumpHeightMenu->AddChild("150", SelectJumpHeight);
-    jumpHeightMenu->AddChild("250", SelectJumpHeight);
-    jumpHeightMenu->AddChild("500", SelectJumpHeight);
-    jumpHeightMenu->AddChild("1000", SelectJumpHeight);
+    jumpHeightMenu->AddChild("39 (Default)", SelectJumpHeight_f);
+    jumpHeightMenu->AddChild("50", SelectJumpHeight_f);
+    jumpHeightMenu->AddChild("100", SelectJumpHeight_f);
+    jumpHeightMenu->AddChild("150", SelectJumpHeight_f);
+    jumpHeightMenu->AddChild("250", SelectJumpHeight_f);
+    jumpHeightMenu->AddChild("500", SelectJumpHeight_f);
+    jumpHeightMenu->AddChild("1000", SelectJumpHeight_f);
     lobbyMenu->AddChild(jumpHeightMenu);
 
     mainMenu->AddChild(lobbyMenu);
@@ -235,20 +237,20 @@ void Client::CreateMenu()
     /// Settings menu
     /// 
     auto* themeMenu = MakeSubmenu("Theme menu");
-    themeMenu->AddChild("Set theme Matrix", SetThemeMatrix);
-    //themeMenu->AddChild("Set theme Classic", SetThemeClassic);
-    themeMenu->AddChild("Set theme Enstone small", SetThemeEnstoneSmall);
-    //themeMenu->AddChild("Set theme Enstone Large", SetThemeEnstoneLarge);
-    //themeMenu->AddChild("Set theme Enstone right", SetThemeEnstoneRight);
-    //themeMenu->AddChild("Set theme Enstone small2", SetThemeEnstoneSmall2);
-    themeMenu->AddChild("Theme color red", ThemeColorRed);
-    themeMenu->AddChild("Theme color green", ThemeColorGreen);
-    themeMenu->AddChild("Theme color blue", ThemeColorBlue);
-    themeMenu->AddChild("Theme color yellow", ThemeColorYellow);
-    themeMenu->AddChild("Move menu up", MoveMenuUp);
-    themeMenu->AddChild("Move menu down", MoveMenuDown);
-    themeMenu->AddChild("Move menu left", MoveMenuLeft);
-    themeMenu->AddChild("Move menu right", MoveMenuRight);
+    themeMenu->AddChild("Set theme Matrix", SetThemeMatrix_f);
+    //themeMenu->AddChild("Set theme Classic", SetThemeClassic_f);
+    themeMenu->AddChild("Set theme Enstone small", SetThemeEnstoneSmall_f);
+    themeMenu->AddChild("Set theme Enstone large", SetThemeEnstoneLarge_f);
+    //themeMenu->AddChild("Set theme Enstone right", SetThemeEnstoneRight_f);
+    //themeMenu->AddChild("Set theme Enstone small2", SetThemeEnstoneSmall2_f);
+    themeMenu->AddChild("Theme color red", ThemeColorRed_f);
+    themeMenu->AddChild("Theme color green", ThemeColorGreen_f);
+    themeMenu->AddChild("Theme color blue", ThemeColorBlue_f);
+    themeMenu->AddChild("Theme color yellow", ThemeColorYellow_f);
+    themeMenu->AddChild("Move menu up", MoveMenuUp_f);
+    themeMenu->AddChild("Move menu down", MoveMenuDown_f);
+    themeMenu->AddChild("Move menu left", MoveMenuLeft_f);
+    themeMenu->AddChild("Move menu right", MoveMenuRight_f);
     mainMenu->AddChild(themeMenu);
 
     rootMenu = mainMenu;
@@ -324,6 +326,7 @@ void Client::CreateHudElems()
         hudTitle = CreateTextHudElem(clientNum, "Invasion", 2.0, menuPos.x, menuPos.y - 10.0, 2.0, { 1.0, 1.0, 1.0 }, 0.0);
         hudTitle->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
         hudTitle->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+        hudTitle->SetTextFont(HE_FONT_OBJECTIVE);
 
         hudAuthor = CreateTextHudElem(clientNum, "by Jordy", 0.9, menuPos.x - 85.0, menuPos.y + 25.0, 2.0, { 1.0, 1.0, 1.0 }, 0.0);
         hudAuthor->SetAlignOrg(HE_ALIGN_X_LEFT, HE_ALIGN_Y_MIDDLE);
@@ -338,6 +341,35 @@ void Client::CreateHudElems()
             hudOptions[i] = CreateTextHudElem(clientNum, currentMenu->children[i] ? currentMenu->children[i]->text : "", 1.0, menuPos.x, menuPos.y - 45.0 + (15.0 * i), 2.0, { 1.0, 1.0, 1.0 }, 0.0);
             hudOptions[i]->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
             hudOptions[i]->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+        }
+
+        break;
+    }
+    case(CLIENT_THEME_ENSTONE_LARGE):
+    {
+        hudBackground = CreateMaterialHudElem(clientNum, "white", 0, 0, 0.0, 0.0, 0.0, { 0.0, 0.0, 0.0 }, 0.0);
+        hudBackground->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudBackground->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+
+        hudTitle = CreateTextHudElem(clientNum, "Invasion", 2.0, 0.0, -205.0, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudTitle->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudTitle->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+        hudTitle->SetTextFont(HE_FONT_OBJECTIVE);
+
+        hudAuthor = CreateTextHudElem(clientNum, "by Jordy", 0.9, 0.0, -185.0, 1.0, { 1.0, 1.0, 0.0 }, 0.0);
+        hudAuthor->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudAuthor->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+
+        hudCurrentMenu = CreateTextHudElem(clientNum, currentMenu->text, 1.2, 0.0, -155.0, 1.0, { 1.0, 1.0, 1.0 }, 0.0);
+        hudCurrentMenu->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+        hudCurrentMenu->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+
+        for (int i = 0; i < ClientMaxViewableOptions; i++)
+        {
+            hudOptions[i] = CreateTextHudElem(clientNum, currentMenu->children[i] ? currentMenu->children[i]->text : "", i == currentOption ? 1.25 : 1.0, 0.0, -120.0 + (15.0 * i), 1.0, i == currentOption ? menuColor : vec3_t(1.0, 1.0, 1.0), 0.0);
+            hudOptions[i]->SetAlignOrg(HE_ALIGN_X_CENTER, HE_ALIGN_Y_MIDDLE);
+            hudOptions[i]->SetAlignScreen(HE_HORZALIGN_CENTER, HE_VERTALIGN_MIDDLE);
+            hudOptions[i]->SetTextGlow(menuColor, i == currentOption ? 1.0 : 0.0);
         }
 
         break;
@@ -419,11 +451,11 @@ void Client::HandleInput()
 {
     // Handle bind first down
     if (noclipBind && (buttonBits & CLIENT_BTN_L2) && !noclip)
-        ToggleNoclip(clientNum);
+        ToggleNoclip_f(clientNum);
 
     // Handle bind released
     if (noclipBind && !(buttonBits & CLIENT_BTN_L2) && noclip)
-        ToggleNoclip(clientNum);
+        ToggleNoclip_f(clientNum);
 
     if (InputReady())
     {
@@ -499,6 +531,19 @@ void Client::ChangeSubmenu(ClientOption* submenu)
             hudOptions[i]->SetText(submenu->children[i + currentOptionOffset] ? submenu->children[i + currentOptionOffset]->text : "");
         }
         hudNavBar->SetY(menuPos.y - 45.0 + (currentOption - currentOptionOffset) * 15.0);
+        break;
+    }
+    case(CLIENT_THEME_ENSTONE_LARGE):
+    {
+        hudCurrentMenu->SetText(submenu->text);
+        for (int i = 0; i < ClientMaxViewableOptions; i++)
+        {
+            hudOptions[i]->SetText(submenu->children[i + currentOptionOffset] ? submenu->children[i + currentOptionOffset]->text : "");
+            hudOptions[i]->SetTextScale(i == currentOption ? 1.25 : 1.0);
+            hudOptions[i]->SetTextGlow(menuColor, i == currentOption ? 1.0 : 0.0);
+            hudOptions[i]->SetRGB(i == currentOption ? menuColor : vec3_t(1.0, 1.0, 1.0));
+        }
+        break;
     }
     }
 }
@@ -543,6 +588,7 @@ void Client::OnOpen()
         for (auto option : hudOptions)
             option->SetAlpha(1.0, 400, 400);
 
+        SetClientBlur(clientNum, 600, 0.0);
         InputSleep(800);
         break;
     }
@@ -565,7 +611,24 @@ void Client::OnOpen()
         hudTitle->AddY(-95.0, 400);
         hudAuthor->AddY(95.0, 400);
 
+        SetClientBlur(clientNum, 600, 0.0);
         InputSleep(400);
+        break;
+    }
+    case(CLIENT_THEME_ENSTONE_LARGE):
+    {
+        hudBackground->SetAlpha(0.75, 400);
+        hudBackground->ScaleOvertime(854, 480, 400);
+
+        hudTitle->SetAlpha(1.0, 200, 400);
+        hudAuthor->SetAlpha(1.0, 200, 400);
+        hudCurrentMenu->SetAlpha(1.0, 200, 400);
+
+        for (auto& option : hudOptions)
+            option->SetAlpha(1.0, 200, 400);
+
+        SetClientBlur(clientNum, 600, 2.0);
+        InputSleep(600);
         break;
     }
     }
@@ -627,6 +690,22 @@ void Client::OnClose()
             option->SetAlpha(0.0);
 
         InputSleep(400);
+        break;
+    }
+    case(CLIENT_THEME_ENSTONE_LARGE):
+    {
+        hudBackground->SetAlpha(0.0, 400, 200);
+        hudBackground->ScaleOvertime(0, 0, 400, 200);
+
+        hudTitle->SetAlpha(0.0, 200);
+        hudAuthor->SetAlpha(0.0, 200);
+        hudCurrentMenu->SetAlpha(0.0, 200);
+
+        for (auto& option : hudOptions)
+            option->SetAlpha(0.0, 200);
+
+        SetClientBlur(clientNum, 600, 0.0);
+        InputSleep(600);
         break;
     }
     }
@@ -730,6 +809,35 @@ void Client::OnScrollUp()
         hudNavBar->SetY(menuPos.y - 45.0 + (currentOption - currentOptionOffset) * 15.0, 115);
         break;
     }
+    case(CLIENT_THEME_ENSTONE_LARGE):
+    {
+        if (shouldMoveOptions)
+        {
+            auto* lastOption = hudOptions[ClientMaxViewableOptions - 1];
+
+            for (int i = ClientMaxViewableOptions - 1; i > 0; i--)
+            {
+                hudOptions[i] = hudOptions[i - 1];
+                hudOptions[i]->SetY(-120.0 + (15.0 * i), 115);
+            }
+
+            hudOptions[0] = lastOption;
+            lastOption->SetY(-120.0);
+            lastOption->SetText(currentMenu->children[currentOptionOffset]->text);
+        }
+
+        auto* previousOption = hudOptions[currentOption - currentOptionOffset + 1];
+        auto* newOption = hudOptions[currentOption - currentOptionOffset];
+
+        previousOption->SetRGB({ 1.0, 1.0, 1.0 }, 200);
+        previousOption->SetTextGlowAlpha(0.0);
+        previousOption->SetTextScale(1.0, 200);
+
+        newOption->SetRGB(menuColor, 200);
+        newOption->SetTextGlowAlpha(1.0);
+        newOption->SetTextScale(1.25, 200);
+        break;
+    }
     }
 }
 
@@ -788,6 +896,35 @@ void Client::OnScrollDown()
         hudNavBar->SetY(menuPos.y - 45.0 + (currentOption - currentOptionOffset) * 15.0, 115);
         break;
     }
+    case(CLIENT_THEME_ENSTONE_LARGE):
+    {
+        if (shouldMoveOptions)
+        {
+            auto* firstOption = hudOptions[0];
+
+            for (int i = 0; i < ClientMaxViewableOptions - 1; i++)
+            {
+                hudOptions[i] = hudOptions[i + 1];
+                hudOptions[i]->SetY(-120.0 + (15.0 * i), 115);
+            }
+
+            hudOptions[ClientMaxViewableOptions - 1] = firstOption;
+            firstOption->SetY(-120.0 + (15.0 * 9.0));
+            firstOption->SetText(currentMenu->children[currentOptionOffset + ClientMaxViewableOptions - 1]->text);
+        }
+
+        auto* previousOption = hudOptions[currentOption - currentOptionOffset - 1];
+        auto* newOption = hudOptions[currentOption - currentOptionOffset];
+
+        previousOption->SetRGB({ 1.0, 1.0, 1.0 }, 200);
+        previousOption->SetTextGlowAlpha(0.0);
+        previousOption->SetTextScale(1.0, 200);
+
+        newOption->SetRGB(menuColor, 200);
+        newOption->SetTextGlowAlpha(1.0);
+        newOption->SetTextScale(1.25, 200);
+        break;
+    }
     }
 }
 
@@ -795,7 +932,6 @@ void Client::SetTheme(ClientTheme theme)
 {
     DestroyHudElems();
     currentTheme = theme;
-    hudBackground = 0;
     OnOpen();
 }
 
@@ -814,10 +950,21 @@ void Client::SetColor(vec3_t color)
         break;
     }
     case(CLIENT_THEME_ENSTONE_SMALL):
+    {
         hudComponents[0]->SetRGB(color, 150);
         hudComponents[1]->SetRGB(color, 150);
         hudNavBar->SetRGB(color, 150);
         break;
+    }
+    case(CLIENT_THEME_ENSTONE_LARGE):
+    {
+        for (auto& option : hudOptions)
+            option->SetTextGlow(color, 0.0);
+
+        hudOptions[currentOption - currentOptionOffset]->SetRGB(color, 150);
+        hudOptions[currentOption - currentOptionOffset]->SetTextGlowAlpha(1.0);
+        break;
+    }
     }
 }
 
@@ -967,6 +1114,11 @@ void SetClientDvar(int clientNum, const char* dvar, const char* value)
     SV_GameSendServerCommand(clientNum, va("setclientdvar \"%s\" \"%s\"", dvar, value));
 }
 
+void SetClientBlur(int clientNum, int timeMs, float radius)
+{
+    SV_GameSendServerCommand(clientNum, va("scr_blur %i %f %i %i", timeMs, radius, BLUR_TIME_RELATIVE, BLUR_PRIORITY_SCRIPT));
+}
+
 void Scr_SetNumParams(int paramCount)
 {
     scrVmPub.outparamcount = paramCount;
@@ -1113,7 +1265,7 @@ void ResetDvar(const char* name)
     }
 }
 
-void ToggleGodMode(int clientNum)
+void ToggleGodMode_f(int clientNum)
 {
     const int bit = (1 << 0);
     int& value = level.clients[clientNum].ps.otherFlags;
@@ -1123,14 +1275,14 @@ void ToggleGodMode(int clientNum)
     GameMessage(clientNum, va("God mode: %s", (value & bit) == bit ? "^2On" : "^1Off"));
 }
 
-void ToggleInfiniteAmmo(int clientNum)
+void ToggleInfiniteAmmo_f(int clientNum)
 {
     users[clientNum].infiniteAmmo ^= 1;
 
     GameMessage(clientNum, va("Infinite ammo: %s", users[clientNum].infiniteAmmo ? "^2On" : "^1Off"));
 }
 
-void ToggleNoSpread(int clientNum)
+void ToggleNoSpread_f(int clientNum)
 {
     const int bit = (1 << 1);
     int& value = level.clients[clientNum].ps.weapCommon.spreadOverrideState;
@@ -1141,7 +1293,7 @@ void ToggleNoSpread(int clientNum)
     GameMessage(clientNum, va("No spread: %s", (value & bit) == bit ? "^2On" : "^1Off"));
 }
 
-void ToggleNoRecoil(int clientNum)
+void ToggleNoRecoil_f(int clientNum)
 {
     const int bit = (1 << 10);
     int& value = level.clients[clientNum].ps.weapCommon.weapFlags;
@@ -1152,14 +1304,14 @@ void ToggleNoRecoil(int clientNum)
     GameMessage(clientNum, va("No recoil: %s", (value & bit) == bit ? "^2On" : "^1Off"));
 }
 
-void ToggleFullAutoWeapons(int clientNum)
+void ToggleFullAutoWeapons_f(int clientNum)
 {
     users[clientNum].fullAutoWeapons ^= 1;
 
     GameMessage(clientNum, va("Full auto weapons: %s", users[clientNum].fullAutoWeapons ? "^2On" : "^1Off"));
 }
 
-void ToggleMovementSpeed(int clientNum)
+void ToggleMovementSpeed_f(int clientNum)
 {
     float& speedScale = level.clients[clientNum].pers.moveSpeedScaleMultiplier;
 
@@ -1168,7 +1320,7 @@ void ToggleMovementSpeed(int clientNum)
     GameMessage(clientNum, va("Movement speed x2: %s", (speedScale == 2.0) ? "^2On" : "^1Off"));
 }
 
-void SelectFov(int clientNum)
+void SelectFov_f(int clientNum)
 {
     auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
     const char* fovValue = currentOption->text;
@@ -1185,7 +1337,7 @@ void SelectFov(int clientNum)
     GameMessage(clientNum, va("Fov set to: ^2%s", fovValue));
 }
 
-void ToggleNoclip(int clientNum)
+void ToggleNoclip_f(int clientNum)
 {
     users[clientNum].noclip ^= 1;
 
@@ -1202,7 +1354,7 @@ void ToggleNoclip(int clientNum)
     GameMessage(clientNum, va("Noclip: %s", users[clientNum].noclip ? "^2On" : "^1Off"));
 }
 
-void ToggleUfoMode(int clientNum)
+void ToggleUfoMode_f(int clientNum)
 {
     users[clientNum].ufo ^= 1;
 
@@ -1217,28 +1369,28 @@ void ToggleUfoMode(int clientNum)
     GameMessage(clientNum, va("UFO mode: %s", users[clientNum].ufo ? "^2On" : "^1Off"));
 }
 
-void ToggleNoclipBind(int clientNum)
+void ToggleNoclipBind_f(int clientNum)
 {
     users[clientNum].noclipBind ^= 1;
 
     GameMessage(clientNum, va("Noclip: %s", users[clientNum].noclipBind ? "^2bound to \x12" : "^1unbound"));
 }
 
-void ToggleRocketRide(int clientNum)
+void ToggleRocketRide_f(int clientNum)
 {
     users[clientNum].rocketRide ^= 1;
 
     GameMessage(clientNum, va("Rocket ride: %s", users[clientNum].rocketRide ? "^2On" : "^1Off"));
 }
 
-void ToggleRocketJump(int clientNum)
+void ToggleRocketJump_f(int clientNum)
 {
     users[clientNum].rocketJump ^= 1;
 
     GameMessage(clientNum, va("Rocket jump: %s", users[clientNum].rocketJump ? "^2On" : "^1Off"));
 }
 
-void ToggleRocketJumpStrength(int clientNum)
+void ToggleRocketJumpStrength_f(int clientNum)
 {
     users[clientNum].rocketJumpStrength += 256.0;
 
@@ -1248,7 +1400,7 @@ void ToggleRocketJumpStrength(int clientNum)
     GameMessage(clientNum, va("Rocket jump strength set to: ^2%.0f", users[clientNum].rocketJumpStrength));
 }
 
-void SetAllPerks(int clientNum)
+void SetAllPerks_f(int clientNum)
 {
     gentity_s* entity = &level.gentities[clientNum];
     gclient_s* client = entity->client;
@@ -1264,7 +1416,7 @@ void SetAllPerks(int clientNum)
     GameMessage(clientNum, "All perks: ^2set");
 }
 
-void ClearAllPerks(int clientNum)
+void ClearAllPerks_f(int clientNum)
 {
     gentity_s* entity = &level.gentities[clientNum];
     gclient_s* client = entity->client;
@@ -1277,7 +1429,7 @@ void ClearAllPerks(int clientNum)
     GameMessage(clientNum, "All perks: ^2cleared");
 }
 
-void SelectPerk(int clientNum)
+void SelectPerk_f(int clientNum)
 {
     auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
     const char* perkName = currentOption->text;
@@ -1289,7 +1441,7 @@ void SelectPerk(int clientNum)
     GameMessage(clientNum, va("%s: ^2%s", HasPerk(clientNum, perkIndex) ? "Set perk" : "Removed perk", perkName));
 }
 
-void SelectWeapon(int clientNum)
+void SelectWeapon_f(int clientNum)
 {
     auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
     const char* weaponName = currentOption->text;
@@ -1306,13 +1458,36 @@ void SelectWeapon(int clientNum)
     GameMessage(clientNum, va("Weapon given: ^2%s", weaponName));
 }
 
-void ResetProjectile(int clientNum)
+void RefillAmmo_f(int clientNum)
+{
+    gentity_s* entity = &level.gentities[clientNum];
+    Weapon weapon = GetCurrentWeapon(clientNum);
+
+    if (weapon.data)
+    {
+        Add_Ammo(entity, weapon, false, 999, 1);
+
+        if (BG_HasUnderbarrelAmmo(weapon))
+        {
+            Add_Ammo(entity, weapon, true, 999, 1);
+        }
+    }
+    GameMessage(clientNum, "Ammo: ^2refilled");
+}
+
+void TakeCurrentWeapon_f(int clientNum)
+{
+    TakeWeapon(clientNum, GetCurrentWeapon(clientNum));
+    GameMessage(clientNum, "Current weapon: ^2taken");
+}
+
+void ResetProjectile_f(int clientNum)
 {
     users[clientNum].projectile = 0;
     GameMessage(clientNum, "Projectile set to: ^2None");
 }
 
-void SetProjectile(int clientNum)
+void SetProjectile_f(int clientNum)
 {
     auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
     const char* projectileName = currentOption->text;
@@ -1321,7 +1496,7 @@ void SetProjectile(int clientNum)
     GameMessage(clientNum, va("Projectile set to: ^2%s", projectileName));
 }
 
-void SelectVision(int clientNum)
+void SelectVision_f(int clientNum)
 {
     auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
     const char* visionName = currentOption->text;
@@ -1330,7 +1505,7 @@ void SelectVision(int clientNum)
     GameMessage(clientNum, va("Vision set: ^2%s", visionName));
 }
 
-void SavePosition(int clientNum)
+void SavePosition_f(int clientNum)
 {
     users[clientNum].savedPosition[0] = level.clients[clientNum].ps.origin[0];
     users[clientNum].savedPosition[1] = level.clients[clientNum].ps.origin[1];
@@ -1340,7 +1515,7 @@ void SavePosition(int clientNum)
     GameMessage(clientNum, "Position: ^2Saved!");
 }
 
-void LoadPosition(int clientNum)
+void LoadPosition_f(int clientNum)
 {
     if (!users[clientNum].positionSaved)
         return GameMessage(clientNum, "^1Error^7: Position wasn't saved!");
@@ -1349,20 +1524,20 @@ void LoadPosition(int clientNum)
     GameMessage(clientNum, "Position: ^2Loaded!");
 }
 
-void TeleportToCrosshair(int clientNum)
+void TeleportToCrosshair_f(int clientNum)
 {
     SetPosition(&level.gentities[clientNum], GetCrosshairPos(clientNum));
     GameMessage(clientNum, "Teleported to crosshair!");
 }
 
-void ToggleTeleportGun(int clientNum)
+void ToggleTeleportGun_f(int clientNum)
 {
     users[clientNum].teleportGun ^= 1;
 
     GameMessage(clientNum, va("Teleport gun: %s", users[clientNum].teleportGun ? "^2On" : "^1Off"));
 }
 
-void SelectTimeScale(int clientNum)
+void SelectTimeScale_f(int clientNum)
 {
     auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
     const char* timeScale = currentOption->text;
@@ -1371,7 +1546,7 @@ void SelectTimeScale(int clientNum)
     GameMessage(clientNum, va("Time scale set to: ^2%s", timeScale));
 }
 
-void SelectPlayerSpeed(int clientNum)
+void SelectPlayerSpeed_f(int clientNum)
 {
     auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
     const char* playerSpeedValue = currentOption->text;
@@ -1388,7 +1563,7 @@ void SelectPlayerSpeed(int clientNum)
     GameMessage(clientNum, va("Player speed set to: ^2%s", playerSpeedValue));
 }
 
-void SelectJumpHeight(int clientNum)
+void SelectJumpHeight_f(int clientNum)
 {
     auto* currentOption = users[clientNum].currentMenu->children[users[clientNum].currentOption];
     const char* jumpHeightValue = currentOption->text;
@@ -1405,82 +1580,82 @@ void SelectJumpHeight(int clientNum)
     GameMessage(clientNum, va("Jump height set to: ^2%s", jumpHeightValue));
 }
 
-void SetThemeMatrix(int clientNum)
+void SetThemeMatrix_f(int clientNum)
 {
     users[clientNum].SetTheme(CLIENT_THEME_MATRIX);
     GameMessage(clientNum, va("Theme set: ^2Matrix"));
 }
 
-void SetThemeClassic(int clientNum)
+void SetThemeClassic_f(int clientNum)
 {
     users[clientNum].SetTheme(CLIENT_THEME_CLASSIC);
     GameMessage(clientNum, va("Theme set: ^2Classic"));
 }
 
-void SetThemeEnstoneSmall(int clientNum)
+void SetThemeEnstoneSmall_f(int clientNum)
 {
     users[clientNum].SetTheme(CLIENT_THEME_ENSTONE_SMALL);
     GameMessage(clientNum, va("Theme set: ^2Enstone small"));
 }
 
-void SetThemeEnstoneLarge(int clientNum)
+void SetThemeEnstoneLarge_f(int clientNum)
 {
     users[clientNum].SetTheme(CLIENT_THEME_ENSTONE_LARGE);
     GameMessage(clientNum, va("Theme set: ^2Enstone large"));
 }
 
-void SetThemeEnstoneRight(int clientNum)
+void SetThemeEnstoneRight_f(int clientNum)
 {
     users[clientNum].SetTheme(CLIENT_THEME_ENSTONE_RIGHT);
     GameMessage(clientNum, va("Theme set: ^2Enstone right"));
 }
 
-void SetThemeEnstoneSmall2(int clientNum)
+void SetThemeEnstoneSmall2_f(int clientNum)
 {
     users[clientNum].SetTheme(CLIENT_THEME_ENSTONE_SMALL2);
     GameMessage(clientNum, va("Theme set: ^2Enstone small2"));
 }
 
-void ThemeColorRed(int clientNum)
+void ThemeColorRed_f(int clientNum)
 {
     users[clientNum].SetColor({ 0.9, 0.1, 0.01 });
     GameMessage(clientNum, "Theme color: ^1red");
 }
 
-void ThemeColorGreen(int clientNum)
+void ThemeColorGreen_f(int clientNum)
 {
     users[clientNum].SetColor({ 0.008, 0.5, 0.2 });
     GameMessage(clientNum, "Theme color: ^2green");
 }
 
-void ThemeColorBlue(int clientNum)
+void ThemeColorBlue_f(int clientNum)
 {
     users[clientNum].SetColor({ 0.0, 0.0, 1.0 });
     GameMessage(clientNum, "Theme color: ^4blue");
 }
 
-void ThemeColorYellow(int clientNum)
+void ThemeColorYellow_f(int clientNum)
 {
     users[clientNum].SetColor({ 1.0, 1.0, 0.0 });
     GameMessage(clientNum, "Theme color: ^3yellow");
 }
 
-void MoveMenuUp(int clientNum)
+void MoveMenuUp_f(int clientNum)
 {
     users[clientNum].Move(0.0, -10.0);
 }
 
-void MoveMenuDown(int clientNum)
+void MoveMenuDown_f(int clientNum)
 {
     users[clientNum].Move(0.0, 10.0);
 }
 
-void MoveMenuLeft(int clientNum)
+void MoveMenuLeft_f(int clientNum)
 {
     users[clientNum].Move(-10.0, 0.0);
 }
 
-void MoveMenuRight(int clientNum)
+void MoveMenuRight_f(int clientNum)
 {
     users[clientNum].Move(10.0, 0.0);
 }
@@ -1647,7 +1822,7 @@ void VM_Notify_Hook(unsigned int notifyListOwnerId, unsigned int stringValue, Va
 
                 if (users[clientNum].teleportGun)
                 {
-                    TeleportToCrosshair(clientNum);
+                    TeleportToCrosshair_f(clientNum);
                 }
             }
 
@@ -1848,7 +2023,7 @@ void PM_Weapon_StartFiring_Hook(HookContext_t& ctx)
     }
 }
 
-namespace clients
+namespace onHost
 {
     void start()
     {

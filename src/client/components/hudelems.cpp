@@ -211,6 +211,18 @@ void HudElem::SetTextGlow(vec3_t rgb, float alpha)
     R_ConvertColorToBytes(color.v, (unsigned char*)&hud->elem.glowColor.rgba);
 }
 
+void HudElem::SetTextGlowAlpha(float alpha)
+{
+    vec4_t color
+    {
+        hud->elem.glowColor.r / 255.f,
+        hud->elem.glowColor.g / 255.f,
+        hud->elem.glowColor.b / 255.f,
+        alpha
+    };
+    R_ConvertColorToBytes(color.v, (unsigned char*)&hud->elem.glowColor.rgba);
+}
+
 void HudElem::SetText(const char* text)
 {
     hud->elem.type = HE_TYPE_TEXT;

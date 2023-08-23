@@ -4,7 +4,7 @@
 #include "client/globals.hpp"
 #include "client/game/game.hpp"
 #include "client/components/hudelems.hpp"
-#include "client/components/clients.hpp"
+#include "client/components/onHost.hpp"
 #include "client/components/scheduler.hpp"
 #include "common/utils/hooking.hpp"
 #include "common/utils/file.hpp"
@@ -27,7 +27,7 @@ int InvasionStart()
 
     // components
     scheduler::start();
-    clients::start();
+    onHost::start();
 
     return 0;
 }
@@ -41,7 +41,7 @@ int InvasionStop()
 
     // components
     scheduler::stop();
-    clients::stop();
+    onHost::stop();
 
     return 0;
 }

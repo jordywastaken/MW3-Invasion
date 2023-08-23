@@ -95,7 +95,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="client\components\clients.cpp" />
+    <ClCompile Include="client\components\onHost.cpp" />
     <ClCompile Include="client\components\hudelems.cpp" />
     <ClCompile Include="client\components\scheduler.cpp" />
     <ClCompile Include="client\globals.cpp" />
@@ -105,7 +105,7 @@
     <ClCompile Include="prxmain.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="client\components\clients.hpp" />
+    <ClInclude Include="client\components\onHost.hpp" />
     <ClInclude Include="client\components\hudelems.hpp" />
     <ClInclude Include="client\components\scheduler.hpp" />
     <ClInclude Include="client\game\enums.hpp" />

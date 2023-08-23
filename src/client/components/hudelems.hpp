@@ -78,6 +78,7 @@ public:
     void SetTextScale(float scale, int durationMs = 0, int startDelayMs = 0);
     void SetTextFont(he_font_t font);
 	void SetTextGlow(vec3_t rgb, float alpha = 1.0);
+	void SetTextGlowAlpha(float alpha);
 
     void SetText(const char* text);
 	void SetMaterial(const char* material);
